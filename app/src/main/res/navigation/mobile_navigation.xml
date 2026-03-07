@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigation_dashboard">
+
+    <fragment
+        android:id="@+id/navigation_dashboard"
+        android:name="com.example.homie.ui.main.dashboard.DashboardFragment"
+        android:label="@string/title_dashboard"
+        tools:layout="@layout/fragment_dashboard" />
+
+    <fragment
+        android:id="@+id/navigation_wallet"
+        android:name="com.example.homie.ui.main.wallet.WalletFragment"
+        android:label="@string/title_wallet"
+        tools:layout="@layout/fragment_wallet" >
+        <action
+            android:id="@+id/action_navigation_wallet_to_addExpenseFragment"
+            app:destination="@id/addExpenseFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_tasks"
+        android:name="com.example.homie.ui.main.tasks.TasksFragment"
+        android:label="@string/title_tasks"
+        tools:layout="@layout/fragment_tasks" >
+        <action
+            android:id="@+id/action_navigation_tasks_to_addTaskFragment"
+            app:destination="@id/addTaskFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/navigation_inventory"
+        android:name="com.example.homie.ui.main.inventory.InventoryFragment"
+        android:label="@string/title_inventory"
+        tools:layout="@layout/fragment_inventory" >
+        <action
+            android:id="@+id/action_navigation_inventory_to_addInventoryFragment"
+            app:destination="@id/addInventoryFragment" />
+        <action
+            android:id="@+id/action_navigation_inventory_to_addExpenseFragment"
+            app:destination="@id/addExpenseFragment" />
+
+    </fragment>
+    <fragment
+        android:id="@+id/addExpenseFragment"
+        android:name="com.example.homie.ui.main.wallet.AddExpenseFragment"
+        android:label="AddExpenseFragment">
+
+        <argument
+            android:name="prefilledTitle"
+            app:argType="string"
+            android:defaultValue="" />
+
+        <argument
+            android:name="prefilledAmount"
+            app:argType="float"
+            android:defaultValue="0.0" />
+
+    </fragment>
+    <fragment
+        android:id="@+id/addTaskFragment"
+        android:name="com.example.homie.ui.main.tasks.AddTaskFragment"
+        android:label="fragment_add_task"
+        tools:layout="@layout/fragment_add_task" />
+    <fragment
+        android:id="@+id/addInventoryFragment"
+        android:name="com.example.homie.ui.main.inventory.AddInventoryFragment"
+        android:label="fragment_add_inventory"
+        tools:layout="@layout/fragment_add_inventory" />
+</navigation>
