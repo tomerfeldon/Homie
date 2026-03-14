@@ -1,6 +1,6 @@
 # Homie App — Top 5 Features Design Spec
 **Date:** 2026-03-14
-**Status:** Approved
+**Status:** Approved (rev 2)
 
 ---
 
@@ -35,22 +35,22 @@ Five coordinated features added to the Homie Android roommate app. All use exist
   - `TextView` showing "Invite code: XXXXXX"
   - Copy icon `ImageView` button to the right
 - Tapping the copy icon copies the code to clipboard and shows toast: "Invite code copied!"
-- **Data flow:** `DashboardData` gains `inviteCode: String` field. `DashboardRepository` already fetches the full `Apartment` object — extract and pass `inviteCode` through. `DashboardUiState.Success` exposes it. `DashboardFragment` binds it on success.
-- No new Firestore calls required.
+- **Data flow:** `DashboardData` gains `inviteCode: String` field. `DashboardRepository` already fetches the full `Apartment` object — extract `apartment.inviteCode` and pass it into the `DashboardData(...)` constructor call inside `getFullDashboardData()`. `DashboardUiState.Success` gains an `inviteCode: String` field. `DashboardFragment` binds it on success.
 
 ---
 
 ## Feature 3 — Assign Task to Roommate (T1)
 
 ### Scope
-`fragment_add_task.xml`, `AddTaskFragment.kt`, `TasksViewModel.kt`, `TasksRepository.kt`
+`fragment_add_task.xml`, `AddTaskFragment.kt`, `TasksViewModel.kt`, `TasksRepository.kt`, `Task.kt`
 
 ### Design
-- Add an "Assign to" `Spinner` (or `AutoCompleteTextView` dropdown) to the Add Task form, below the description field
-- On fragment creation, load apartment members list via a new `TasksViewModel.loadMembers()` method that reuses the existing Firestore members-fetch pattern
-- Spinner populates with member names; defaults to the current user (index 0)
+- Add a `createdBy: String` field to the `Task` data model to record the UID of whoever created the task (distinct from `assignedTo`). Set to `currentUser.uid` in `TasksRepository.addTask()`.
+- Add an "Assign to" `Spinner` to the Add Task form, below the description field
+- On fragment creation, load apartment members via a new `TasksViewModel.loadMembers()` / `TasksRepository.getMembers(aptId)` method
+- Spinner defaults to the current user (index 0); user may select any member
 - On save, `task.assignedTo` and `task.assignedToName` are set from the selected spinner item
-- No `Task` model changes needed — `assignedTo` and `assignedToName` fields already exist
+- **`addTask()` signature change:** `TasksRepository.addTask()` and `TasksViewModel.addTask()` gain two new parameters: `assignedToId: String` and `assignedToName: String`, replacing the hardcoded `currentUser.uid` assignment
 
 ---
 
@@ -58,7 +58,6 @@ Five coordinated features added to the Homie Android roommate app. All use exist
 
 ### Scope
 `WalletFragment.kt`, `TasksFragment.kt`, `InventoryFragment.kt`,
-`ExpenseAdapter.kt`, `TasksAdapter.kt`, `InventoryAdapter.kt`,
 `WalletRepository.kt` (new), `TasksRepository.kt`, `InventoryRepository.kt`
 
 ### Design
@@ -68,12 +67,15 @@ Five coordinated features added to the Homie Android roommate app. All use exist
 - Red delete background with a trash icon drawn via `onChildDraw` during swipe
 
 #### Permission Check
-Before showing confirmation, compare current user UID against the item's creator field:
+Before showing confirmation, compare current user UID against the item's **creator** field:
+
 | Screen | Creator field |
 |---|---|
 | Wallet | `expense.payerId` |
-| Tasks | `task.assignedTo` (creator is assigner) |
+| Tasks | `task.createdBy` (new field added in Feature 3) |
 | Inventory | `inventoryItem.addedBy` |
+
+**Implementation order note:** Feature 3 (which adds `task.createdBy`) must be implemented before or alongside Feature 4. The swipe-delete for Tasks uses `task.createdBy`, not `task.assignedTo`.
 
 - If UID does not match: item snaps back, toast: "You can only delete items you created"
 - If UID matches: show `MaterialAlertDialog` ("Delete this item? This cannot be undone")
@@ -82,39 +84,51 @@ Before showing confirmation, compare current user UID against the item's creator
 - Item is deleted from Firestore
 - On cancel: `notifyItemChanged(position)` to snap item back
 
-#### Repository Methods (all one-liners)
-- `WalletRepository.deleteExpense(aptId, expenseId)`
-- `TasksRepository.deleteTask(aptId, taskId)`
-- `InventoryRepository.deleteInventoryItem(aptId, itemId)`
+#### Repository Methods
+- `WalletRepository.deleteExpense(aptId, expenseId)` — Firestore document delete
+- `TasksRepository.deleteTask(aptId, taskId)` — Firestore document delete
+- `InventoryRepository.deleteInventoryItem(aptId, itemId)` — Firestore document delete
 
 Tasks and Inventory use real-time listeners — list updates automatically after delete. Wallet calls `loadExpenses()` after delete to refresh.
-
-#### Note on Tasks
-The current `task.assignedTo` stores the assignee, not the creator. After Feature T1 is implemented, a separate `createdBy` field should be used for the permission check. For now, `assignedTo` is used as a proxy (since tasks are currently always self-assigned).
 
 ---
 
 ## Feature 5 — Settle Up (W5)
 
 ### Scope
-`fragment_wallet.xml`, `WalletFragment.kt`, `WalletViewModel.kt`,
-new `SettleUpBottomSheet.kt`, new `item_balance_row.xml`,
-new `BalanceSummaryAdapter.kt`, `WalletRepository.kt`
+`fragment_wallet.xml`, `WalletFragment.kt`, `WalletViewModel.kt`, `WalletUiState.kt`,
+new `WalletRepository.kt`, new `SettleUpBottomSheet.kt`,
+new `BalanceSummaryAdapter.kt`, new `item_balance_row.xml`,
+`Expense.kt`
 
 ### Design
 
+#### New `MemberBalance` Data Class
+A new data class placed in `com.example.homie.data.model` (alongside `User`, `Expense`, etc.):
+```kotlin
+data class MemberBalance(
+    val userId: String,
+    val name: String,
+    val balance: Double   // positive = owed money, negative = owes money
+)
+```
+
+#### `WalletUiState` Change
+`WalletUiState.Success` replaces `balanceSummary: String` with `balanceRows: List<MemberBalance>`. `WalletFragment` renders this list via `BalanceSummaryAdapter` instead of setting text on a `TextView`.
+
 #### Balance Card Redesign
 - Replace `tvBalanceSummary` (`TextView`) in `cardBalance` with a `RecyclerView`
-- New `BalanceSummaryAdapter` displays one row per member showing name + balance
+- `BalanceSummaryAdapter` displays one row per `MemberBalance` showing name + formatted balance
 - Row colors:
   - Positive balance → `@color/success` ("owed money")
   - Negative balance → `@color/error` ("owes money")
   - Zero → `@color/text_tertiary`
-- Rows with **negative balance** are tappable (clickable) → opens `SettleUpBottomSheet`
+- Rows with **negative balance** are tappable → opens `SettleUpBottomSheet` pre-filled with that member's data
 - Rows with zero or positive balance are not tappable
 
 #### SettleUpBottomSheet
 `BottomSheetDialogFragment` with:
+
 | Field | Behaviour |
 |---|---|
 | "From" | Read-only, pre-filled with selected member's name |
@@ -122,21 +136,57 @@ new `BalanceSummaryAdapter.kt`, `WalletRepository.kt`
 | Amount | Pre-filled with owed amount (absolute value), editable |
 | Confirm button | Submits settlement |
 
-On confirm: calls `WalletViewModel.settleUp(fromUserId, fromName, toName, amount)`
+On confirm: calls `WalletViewModel.settleUp(fromUserId, fromName, amount)`
 
-#### Data Model — Settlement as Expense
-Settlements are stored as regular `Expense` documents in Firestore:
+`toUserId` and `toName` are not parameters — the "To" party is always the **current user** (`FirebaseAuth.currentUser.uid` / `currentUser.name`), resolved inside `settleUp()`. `participants` is set to `listOf(fromUserId, currentUser.uid)`.
+
+#### Data Model — `Expense` gains `participants` field
+Add `participants: List<String> = emptyList()` to the `Expense` data class.
+
+- For normal expenses: `participants` is empty — balance calc splits among **all** members (existing behaviour, unchanged)
+- For settlements: `participants = listOf(fromUserId, toUserId)` — balance calc splits **only** among those two users
+
+This prevents settlements from incorrectly affecting uninvolved roommates in 3+ person apartments.
+
+Settlements are stored in Firestore as:
 ```
-category  = "Settlement"
-description = "{fromName} → {toName}"
-amount    = <entered amount>
-payerId   = fromUserId   (the person paying their debt)
-payerName = fromName
+category     = "Settlement"
+description  = "{fromName} → {toName}"
+amount       = <entered amount>
+payerId      = fromUserId
+payerName    = fromName
+participants = [fromUserId, toUserId]
 ```
-The existing balance calculation in `WalletViewModel.calculateBalance()` processes all expenses including settlements — no changes to the algorithm needed. The settlement payment correctly reduces the payer's negative balance.
+
+#### Balance Calculation Update
+`WalletViewModel.calculateBalance()` changes its **return type from `String` to `List<MemberBalance>`**, and its **input signature from `nameMap: Map<String, String>` to `members: List<User>`** (using `User.userId` and `User.name` directly — the `nameMap` pre-build step is eliminated).
+
+Instead of building a formatted string, it builds and returns a `MemberBalance` per member. The split logic gains one conditional:
+```
+val splitAmong = if (expense.participants.isEmpty()) members else members.filter { it.userId in expense.participants }
+val perPersonShare = expense.amount / splitAmong.size
+// Only credit/debit members in splitAmong
+```
+
+**`addExpense()` path and `_expenseSaveState` removal:** `WalletViewModel` currently has two LiveData fields — `_uiState` (expense list) and `_expenseSaveState` (save result) — observed by `WalletFragment` and `AddExpenseFragment` respectively. After this refactor:
+
+- `_expenseSaveState: MutableLiveData<WalletUiState>` is **removed** (its type would conflict with the new `Success` shape).
+- A new `val expenseSaved = MutableLiveData<Boolean>()` (or `SingleLiveEvent<Unit>`) is added to `WalletViewModel`. It emits `true` when `addExpense()` succeeds, `false` on error.
+- `AddExpenseFragment` observes `expenseSaved` instead of `expenseSaveState` — navigates back on `true`, shows error toast on `false`.
+- `WalletFragment` removes its `expenseSaveState` observer entirely; it already observes `_uiState`, which updates automatically when `loadExpenses()` is called after a save.
+- `WalletFragment`'s Modified Files entry is updated to reflect this observer removal.
 
 #### Display in Expense List
-Settlement items appear in the expense list like any other expense. `ExpenseAdapter` renders them with `category = "Settlement"` and the description showing the direction of payment.
+Settlements appear in the expense list like any other expense, with `category = "Settlement"` and the direction shown in the description.
+
+#### `WalletRepository` (new file)
+Extracted from `WalletViewModel` inline Firestore calls. Contains:
+- `getExpenses(aptId): List<Expense>`
+- `addExpense(aptId, expense: Expense)`
+- `deleteExpense(aptId, expenseId)`
+- `getApartmentMembers(aptId): List<User>`
+
+`WalletViewModel` is refactored to delegate all Firestore operations to `WalletRepository`.
 
 ---
 
@@ -145,8 +195,8 @@ Settlement items appear in the expense list like any other expense. `ExpenseAdap
 | Model | Change |
 |---|---|
 | `DashboardData` | Add `inviteCode: String` |
-| `Task` | No changes (existing fields sufficient) |
-| `Expense` | No changes (Settlement reuses existing schema) |
+| `Task` | Add `createdBy: String` |
+| `Expense` | Add `participants: List<String> = emptyList()` |
 | `InventoryItem` | No changes |
 | `User` | No changes |
 
@@ -156,9 +206,11 @@ Settlement items appear in the expense list like any other expense. `ExpenseAdap
 
 | File | Purpose |
 |---|---|
+| `WalletRepository.kt` | Firestore operations extracted from `WalletViewModel` |
 | `SettleUpBottomSheet.kt` | Bottom sheet form for recording a settlement |
 | `BalanceSummaryAdapter.kt` | RecyclerView adapter for per-member balance rows |
 | `item_balance_row.xml` | Layout for a single balance row |
+| `MemberBalance.kt` | Data class for a member's balance amount — placed in `com.example.homie.data.model` |
 
 ---
 
@@ -170,19 +222,34 @@ Settlement items appear in the expense list like any other expense. `ExpenseAdap
 | `LoginActivity.kt` | Handle forgot password dialog + Firebase call |
 | `fragment_dashboard.xml` | Add invite code row |
 | `DashboardFragment.kt` | Bind invite code, clipboard copy |
-| `DashboardData.kt` | Add `inviteCode` field |
-| `DashboardUiState.kt` | Expose `inviteCode` in Success state |
-| `DashboardRepository.kt` | Pass `inviteCode` through from Apartment |
+| `DashboardData.kt` | Add `inviteCode: String` field |
+| `DashboardUiState.kt` | Add `inviteCode: String` to `Success` state |
+| `DashboardRepository.kt` | Pass `inviteCode` through from Apartment object |
+| `Task.kt` | Add `createdBy: String` field |
+| `Expense.kt` | Add `participants: List<String>` field |
 | `fragment_add_task.xml` | Add "Assign to" spinner |
 | `AddTaskFragment.kt` | Load members, wire spinner, pass assignee on save |
-| `TasksViewModel.kt` | Add `loadMembers()` |
-| `TasksRepository.kt` | Add `deleteTask()`, `getMembers()` |
+| `TasksViewModel.kt` | Add `loadMembers()`; update `addTask()` signature |
+| `TasksRepository.kt` | Add `deleteTask()`, `getMembers()`; update `addTask()` signature to accept `assignedToId` + `assignedToName` and set `createdBy` |
 | `InventoryRepository.kt` | Add `deleteInventoryItem()` |
-| `WalletFragment.kt` | Attach swipe handler, wire BalanceSummaryAdapter, open bottom sheet |
-| `WalletViewModel.kt` | Add `settleUp()`, expose balance rows as list |
+| `WalletFragment.kt` | Attach swipe handler, wire `BalanceSummaryAdapter`, open bottom sheet |
+| `WalletViewModel.kt` | Refactor to use `WalletRepository`; add `settleUp()`; update `calculateBalance()` for `participants`; expose `balanceRows: List<MemberBalance>` |
+| `WalletUiState.kt` | Replace `balanceSummary: String` with `balanceRows: List<MemberBalance>` |
 | `TasksFragment.kt` | Attach swipe handler |
 | `InventoryFragment.kt` | Attach swipe handler |
-| `fragment_wallet.xml` | Replace `tvBalanceSummary` with RecyclerView |
+| `fragment_wallet.xml` | Replace `tvBalanceSummary` with `RecyclerView` inside `cardBalance` |
+
+---
+
+## Implementation Order
+
+Features must be implemented in this order to avoid dependency issues:
+
+1. **G1** — Forgot Password (fully independent)
+2. **G6** — Share Invite Code (fully independent)
+3. **T1** — Assign Task (adds `Task.createdBy`, updates `addTask()` signature)
+4. **W2+T2+I1** — Swipe to Delete (depends on `Task.createdBy` from T1; creates `WalletRepository`)
+5. **W5** — Settle Up (depends on `WalletRepository` from step 4; adds `Expense.participants`)
 
 ---
 
