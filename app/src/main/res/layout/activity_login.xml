@@ -121,6 +121,18 @@
                     android:textColor="@color/white"
                     app:cornerRadius="20dp" />
 
+                <TextView
+                    android:id="@+id/tvForgotPassword"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="8dp"
+                    android:text="Forgot password?"
+                    android:textColor="@color/app_color"
+                    android:textSize="14sp"
+                    android:background="?attr/selectableItemBackground"
+                    android:padding="8dp" />
+
                 <LinearLayout
                     android:id="@+id/llRegister"
                     android:layout_width="match_parent"

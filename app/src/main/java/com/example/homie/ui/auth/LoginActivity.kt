@@ -34,6 +34,10 @@ class LoginActivity : AppCompatActivity() {
         binding.llRegister.setOnClickListener {
             startActivity(Intent(this@LoginActivity, RegisterActivity::class.java))
         }
+
+        binding.tvForgotPassword.setOnClickListener {
+            showForgotPasswordDialog()
+        }
     }
 
     private fun loginUser() {
@@ -87,5 +91,39 @@ class LoginActivity : AppCompatActivity() {
     private fun navigateToMain() {
         startActivity(Intent(this, MainActivity::class.java))
         finish()
+    }
+
+    private fun showForgotPasswordDialog() {
+        val emailInput = com.google.android.material.textfield.TextInputEditText(this)
+        emailInput.hint = "Email"
+        emailInput.inputType = android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+        val container = android.widget.FrameLayout(this).apply {
+            val padding = resources.getDimensionPixelSize(
+                com.google.android.material.R.dimen.m3_alert_dialog_action_spacing
+            )
+            setPadding(padding, 0, padding, 0)
+            addView(emailInput)
+        }
+
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+            .setTitle("Reset Password")
+            .setMessage("Enter your email address and we'll send you a reset link.")
+            .setView(container)
+            .setPositiveButton("Send") { _, _ ->
+                val email = emailInput.text.toString().trim()
+                if (email.isEmpty()) {
+                    Toast.makeText(this, "Enter your email", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                auth.sendPasswordResetEmail(email)
+                    .addOnSuccessListener {
+                        Toast.makeText(this, "Check your email for a reset link", Toast.LENGTH_LONG).show()
+                    }
+                    .addOnFailureListener {
+                        Toast.makeText(this, it.message ?: "Failed to send email", Toast.LENGTH_LONG).show()
+                    }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 }
