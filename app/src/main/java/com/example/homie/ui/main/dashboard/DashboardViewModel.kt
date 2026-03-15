@@ -23,7 +23,8 @@ class DashboardViewModel(
                         apartmentName = it.apartmentName,
                         members = it.members,
                         urgentTasks = it.urgentTasks,
-                        debtText = it.debtText
+                        debtText = it.debtText,
+                        inviteCode = it.inviteCode
                     )
                 },
                 onFailure = {

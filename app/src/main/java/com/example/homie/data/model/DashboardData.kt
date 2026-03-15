@@ -4,5 +4,6 @@ data class DashboardData(
     val apartmentName: String,
     val members: List<User>,
     val urgentTasks: List<Task>,
-    val debtText: String
+    val debtText: String,
+    val inviteCode: String
 )

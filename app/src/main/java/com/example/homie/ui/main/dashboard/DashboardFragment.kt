@@ -1,6 +1,9 @@
 package com.example.homie.ui.main.dashboard
 
 import android.app.ProgressDialog
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.*
@@ -22,6 +25,7 @@ class DashboardFragment : Fragment() {
     private lateinit var membersAdapter: MembersAdapter
     private lateinit var tasksAdapter: DashboardTaskAdapter
     private lateinit var progressDialog: ProgressDialog
+    private var currentInviteCode = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,6 +42,15 @@ class DashboardFragment : Fragment() {
         observeUiState()
 
         viewModel.loadDashboard()
+
+        binding.ivCopyCode.setOnClickListener {
+            if (currentInviteCode.isNotEmpty()) {
+                val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                val clip = ClipData.newPlainText("invite_code", currentInviteCode)
+                clipboard.setPrimaryClip(clip)
+                Toast.makeText(requireContext(), "Invite code copied!", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         binding.ivLogout.setOnClickListener {
             FirebaseAuth.getInstance().signOut()
@@ -83,6 +96,8 @@ class DashboardFragment : Fragment() {
                         "Apartment: ${state.apartmentName}"
 
                     binding.tvCurrentDebt.text = state.debtText
+                    currentInviteCode = state.inviteCode
+                    binding.tvInviteCode.text = "Invite code: ${state.inviteCode}"
 
                     membersAdapter.updateData(state.members)
                     tasksAdapter.updateData(state.urgentTasks)

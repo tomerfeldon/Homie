@@ -80,7 +80,8 @@ class DashboardRepository {
                     apartment.name,
                     members,
                     urgentTasks,
-                    debtText
+                    debtText,
+                    apartment.inviteCode
                 )
             )
 
