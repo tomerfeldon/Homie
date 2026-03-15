@@ -23,14 +23,5 @@
             android:gravity="center"
             android:layout_gravity="center"/>
 
-        <TextView
-            android:id="@+id/tvStreak"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:textSize="12sp"
-            android:singleLine="true"
-            android:ellipsize="end"/>
-
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

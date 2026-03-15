@@ -25,7 +25,6 @@ class MembersAdapter(
     override fun onBindViewHolder(holder: MemberViewHolder, position: Int) {
         val user = members[position]
         holder.binding.tvName.text = user.name
-        holder.binding.tvStreak.text = "🔥 ${user.streak}"
     }
 
     override fun getItemCount() = members.size

@@ -4,18 +4,22 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/background"
     tools:context=".ui.main.inventory.InventoryFragment">
 
     <TextView
         android:id="@+id/tvLabel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/app_color"
+        android:background="@drawable/bg_header_inventory"
         android:gravity="center"
-        android:padding="15dp"
+        android:paddingTop="52dp"
+        android:paddingBottom="20dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
         android:text="Inventory"
         android:textColor="@color/white"
-        android:textSize="18sp"
+        android:textSize="22sp"
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -23,20 +27,23 @@
         android:id="@+id/rvInventory"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:padding="8dp"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="4dp"
+        android:clipToPadding="false"
         app:layout_constraintTop_toBottomOf="@+id/tvLabel"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabAddItem"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/baseline_add_24"
+        app:backgroundTint="@color/tertiary"
         app:tint="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_margin="16dp"/>
+        android:layout_margin="20dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

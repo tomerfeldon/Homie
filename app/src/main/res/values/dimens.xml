@@ -1,5 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Default screen margins, per the Android Design guidelines. -->
+    <!-- ==================== -->
+    <!-- SPACING SCALE -->
+    <!-- ==================== -->
+    <!-- Based on 4dp grid system -->
+
+    <dimen name="spacing_none">0dp</dimen>
+    <dimen name="spacing_xxs">2dp</dimen>
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_sm">8dp</dimen>
+    <dimen name="spacing_md">12dp</dimen>
+    <dimen name="spacing_base">16dp</dimen>
+    <dimen name="spacing_lg">20dp</dimen>
+    <dimen name="spacing_xl">24dp</dimen>
+    <dimen name="spacing_2xl">32dp</dimen>
+    <dimen name="spacing_3xl">40dp</dimen>
+    <dimen name="spacing_4xl">48dp</dimen>
+    <dimen name="spacing_5xl">56dp</dimen>
+    <dimen name="spacing_6xl">64dp</dimen>
+
+    <!-- ==================== -->
+    <!-- MARGIN PRESETS -->
+    <!-- ==================== -->
+
+    <dimen name="margin_screen">16dp</dimen>
+    <dimen name="margin_screen_large">24dp</dimen>
+    <dimen name="margin_card">16dp</dimen>
+    <dimen name="margin_card_compact">12dp</dimen>
+    <dimen name="margin_section">24dp</dimen>
+    <dimen name="margin_item">8dp</dimen>
+
+    <!-- Legacy support -->
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
+
+    <!-- ==================== -->
+    <!-- CORNER RADIUS -->
+    <!-- ==================== -->
+
+    <dimen name="radius_none">0dp</dimen>
+    <dimen name="radius_xs">4dp</dimen>
+    <dimen name="radius_sm">8dp</dimen>
+    <dimen name="radius_md">12dp</dimen>
+    <dimen name="radius_lg">16dp</dimen>
+    <dimen name="radius_xl">20dp</dimen>
+    <dimen name="radius_2xl">24dp</dimen>
+    <dimen name="radius_3xl">28dp</dimen>
+    <dimen name="radius_full">50dp</dimen>
+
+    <!-- Component-specific radius -->
+    <dimen name="radius_card">16dp</dimen>
+    <dimen name="radius_button">16dp</dimen>
+    <dimen name="radius_button_small">12dp</dimen>
+    <dimen name="radius_input">12dp</dimen>
+    <dimen name="radius_chip">8dp</dimen>
+    <dimen name="radius_avatar">50dp</dimen>
+    <dimen name="radius_bottom_sheet">24dp</dimen>
+
+    <!-- ==================== -->
+    <!-- ELEVATION -->
+    <!-- ==================== -->
+
+    <dimen name="elevation_none">0dp</dimen>
+    <dimen name="elevation_xs">1dp</dimen>
+    <dimen name="elevation_sm">2dp</dimen>
+    <dimen name="elevation_md">4dp</dimen>
+    <dimen name="elevation_lg">6dp</dimen>
+    <dimen name="elevation_xl">8dp</dimen>
+    <dimen name="elevation_2xl">12dp</dimen>
+    <dimen name="elevation_3xl">16dp</dimen>
+
+    <!-- Component-specific elevation -->
+    <dimen name="elevation_card">2dp</dimen>
+    <dimen name="elevation_card_raised">4dp</dimen>
+    <dimen name="elevation_fab">6dp</dimen>
+    <dimen name="elevation_bottom_nav">8dp</dimen>
+    <dimen name="elevation_app_bar">4dp</dimen>
+    <dimen name="elevation_dialog">24dp</dimen>
+
+    <!-- ==================== -->
+    <!-- COMPONENT SIZES -->
+    <!-- ==================== -->
+
+    <!-- Buttons -->
+    <dimen name="button_height">56dp</dimen>
+    <dimen name="button_height_small">40dp</dimen>
+    <dimen name="button_height_large">64dp</dimen>
+    <dimen name="button_min_width">88dp</dimen>
+    <dimen name="button_padding_horizontal">24dp</dimen>
+    <dimen name="button_padding_horizontal_small">16dp</dimen>
+
+    <!-- Input fields -->
+    <dimen name="input_height">56dp</dimen>
+    <dimen name="input_height_large">64dp</dimen>
+
+    <!-- Icons -->
+    <dimen name="icon_size_xs">16dp</dimen>
+    <dimen name="icon_size_sm">20dp</dimen>
+    <dimen name="icon_size_md">24dp</dimen>
+    <dimen name="icon_size_lg">32dp</dimen>
+    <dimen name="icon_size_xl">40dp</dimen>
+    <dimen name="icon_size_2xl">48dp</dimen>
+
+    <!-- Avatars -->
+    <dimen name="avatar_size_xs">24dp</dimen>
+    <dimen name="avatar_size_sm">32dp</dimen>
+    <dimen name="avatar_size_md">40dp</dimen>
+    <dimen name="avatar_size_lg">48dp</dimen>
+    <dimen name="avatar_size_xl">64dp</dimen>
+    <dimen name="avatar_size_2xl">80dp</dimen>
+
+    <!-- FAB -->
+    <dimen name="fab_size">56dp</dimen>
+    <dimen name="fab_size_small">40dp</dimen>
+    <dimen name="fab_size_large">96dp</dimen>
+    <dimen name="fab_margin">16dp</dimen>
+
+    <!-- App Bar -->
+    <dimen name="app_bar_height">56dp</dimen>
+    <dimen name="app_bar_height_large">152dp</dimen>
+
+    <!-- Bottom Navigation -->
+    <dimen name="bottom_nav_height">80dp</dimen>
+
+    <!-- Cards -->
+    <dimen name="card_padding">16dp</dimen>
+    <dimen name="card_padding_compact">12dp</dimen>
+    <dimen name="card_padding_large">20dp</dimen>
+
+    <!-- Dividers -->
+    <dimen name="divider_thickness">1dp</dimen>
+    <dimen name="divider_inset">16dp</dimen>
+
+    <!-- ==================== -->
+    <!-- LIST ITEMS -->
+    <!-- ==================== -->
+
+    <dimen name="list_item_height_single">48dp</dimen>
+    <dimen name="list_item_height_two_line">72dp</dimen>
+    <dimen name="list_item_height_three_line">88dp</dimen>
+    <dimen name="list_item_padding_vertical">12dp</dimen>
+    <dimen name="list_item_padding_horizontal">16dp</dimen>
+
+    <!-- ==================== -->
+    <!-- TOUCH TARGETS -->
+    <!-- ==================== -->
+
+    <dimen name="touch_target_min">48dp</dimen>
+    <dimen name="touch_target_recommended">56dp</dimen>
+
 </resources>
