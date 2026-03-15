@@ -6,6 +6,7 @@ data class Task(
     var description: String = "",
     var assignedTo: String = "",
     var assignedToName: String = "",
+    var createdBy: String = "",
     var completed: Boolean = false,
     var timestamp: Long = System.currentTimeMillis()
 )

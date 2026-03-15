@@ -1,15 +1,23 @@
 package com.example.homie.ui.main.tasks
 
 import android.app.ProgressDialog
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.*
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.homie.R
 import com.example.homie.databinding.FragmentTasksBinding
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.firebase.auth.FirebaseAuth
 
 class TasksFragment : Fragment() {
 
@@ -69,6 +77,76 @@ class TasksFragment : Fragment() {
         binding.fabAddTask.setOnClickListener {
             findNavController().navigate(R.id.action_navigation_tasks_to_addTaskFragment)
         }
+
+        setupSwipeToDelete()
+    }
+
+    private fun setupSwipeToDelete() {
+        val swipeCallback = object : ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT) {
+            override fun onMove(
+                rv: RecyclerView,
+                vh: RecyclerView.ViewHolder,
+                t: RecyclerView.ViewHolder
+            ) = false
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.adapterPosition
+                val task = adapter.currentList[position]
+                val currentUid = FirebaseAuth.getInstance().currentUser?.uid
+
+                if (task.createdBy != currentUid) {
+                    adapter.notifyItemChanged(position)
+                    Toast.makeText(
+                        requireContext(),
+                        "You can only delete tasks you created",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return
+                }
+
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("Delete task?")
+                    .setMessage("This cannot be undone.")
+                    .setPositiveButton("Delete") { _, _ ->
+                        viewModel.deleteTask(task)
+                    }
+                    .setNegativeButton("Cancel") { _, _ ->
+                        adapter.notifyItemChanged(position)
+                    }
+                    .setOnCancelListener {
+                        adapter.notifyItemChanged(position)
+                    }
+                    .show()
+            }
+
+            override fun onChildDraw(
+                c: Canvas,
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                dX: Float, dY: Float,
+                actionState: Int,
+                isCurrentlyActive: Boolean
+            ) {
+                val itemView = viewHolder.itemView
+                val background = ColorDrawable(Color.parseColor("#E53935"))
+                background.setBounds(
+                    itemView.right + dX.toInt(), itemView.top,
+                    itemView.right, itemView.bottom
+                )
+                background.draw(c)
+                ContextCompat.getDrawable(recyclerView.context, R.drawable.baseline_delete_24)
+                    ?.let { icon ->
+                        val margin = (itemView.height - icon.intrinsicHeight) / 2
+                        val top = itemView.top + margin
+                        val right = itemView.right - margin
+                        icon.setBounds(right - icon.intrinsicWidth, top, right, top + icon.intrinsicHeight)
+                        icon.setTint(Color.WHITE)
+                        icon.draw(c)
+                    }
+                super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+            }
+        }
+        ItemTouchHelper(swipeCallback).attachToRecyclerView(binding.rvTasks)
     }
 
     override fun onDestroyView() {

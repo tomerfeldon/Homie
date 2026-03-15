@@ -1,6 +1,7 @@
 package com.example.homie.data.repository
 
 import com.example.homie.data.model.Task
+import com.example.homie.data.model.User
 import com.example.homie.ui.main.tasks.TaskUiState
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
@@ -21,6 +22,21 @@ class TasksRepository {
             .await()
 
         return doc.getString("apartmentId")
+    }
+
+    suspend fun getMembers(apartmentId: String): List<User> {
+        val aptDoc = firestore.collection("apartments")
+            .document(apartmentId)
+            .get()
+            .await()
+        val memberIds = aptDoc.get("members") as? List<String> ?: return emptyList()
+        return memberIds.mapNotNull { uid ->
+            firestore.collection("users")
+                .document(uid)
+                .get()
+                .await()
+                .toObject(User::class.java)
+        }
     }
 
     fun observeTasks(
@@ -45,26 +61,39 @@ class TasksRepository {
             }
     }
 
-    suspend fun addTask(apartmentId: String, title: String, description: String) {
+    suspend fun addTask(
+        apartmentId: String,
+        title: String,
+        description: String,
+        assignedToId: String,
+        assignedToName: String
+    ) {
         val user = auth.currentUser ?: return
-
         val taskId = UUID.randomUUID().toString()
-
         val task = Task(
             id = taskId,
             title = title,
             description = description,
-            assignedTo = user.uid,
-            assignedToName = user.email ?: "",
+            assignedTo = assignedToId,
+            assignedToName = assignedToName,
+            createdBy = user.uid,
             completed = false,
             timestamp = System.currentTimeMillis()
         )
-
         firestore.collection("apartments")
             .document(apartmentId)
             .collection("tasks")
             .document(taskId)
             .set(task)
+            .await()
+    }
+
+    suspend fun deleteTask(apartmentId: String, taskId: String) {
+        firestore.collection("apartments")
+            .document(apartmentId)
+            .collection("tasks")
+            .document(taskId)
+            .delete()
             .await()
     }
 

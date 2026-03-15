@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.homie.data.model.Task
+import com.example.homie.data.model.User
 import com.example.homie.data.repository.TasksRepository
 import kotlinx.coroutines.launch
 
@@ -20,6 +21,9 @@ class TasksViewModel(
     private val _addTaskState = MutableLiveData<TaskUiState<Unit>>()
     val addTaskState: LiveData<TaskUiState<Unit>> = _addTaskState
 
+    private val _membersState = MutableLiveData<List<User>>()
+    val membersState: LiveData<List<User>> = _membersState
+
     suspend fun ensureApartmentLoaded(): Boolean {
         if (apartmentId == null) {
             apartmentId = repository.getApartmentId()
@@ -27,20 +31,31 @@ class TasksViewModel(
         return apartmentId != null
     }
 
-    fun addTask(title: String, description: String) {
+    fun addTask(title: String, description: String, assignedToId: String, assignedToName: String) {
         viewModelScope.launch {
             _addTaskState.value = TaskUiState.Loading
             try {
                 if (ensureApartmentLoaded()) {
-                    repository.addTask(apartmentId!!, title, description)
+                    repository.addTask(apartmentId!!, title, description, assignedToId, assignedToName)
                     _addTaskState.value = TaskUiState.Success(Unit)
                 } else {
-                    _addTaskState.value =
-                        TaskUiState.Error("Apartment not found")
+                    _addTaskState.value = TaskUiState.Error("Apartment not found")
                 }
             } catch (e: Exception) {
-                _addTaskState.value =
-                    TaskUiState.Error(e.message ?: "Failed to add task")
+                _addTaskState.value = TaskUiState.Error(e.message ?: "Failed to add task")
+            }
+        }
+    }
+
+    fun loadMembers() {
+        viewModelScope.launch {
+            try {
+                if (ensureApartmentLoaded()) {
+                    val members = repository.getMembers(apartmentId!!)
+                    _membersState.value = members
+                }
+            } catch (e: Exception) {
+                // fail silently; spinner will remain empty
             }
         }
     }
@@ -69,6 +84,16 @@ class TasksViewModel(
                 }
             } catch (e: Exception) {
                 _tasksState.value = TaskUiState.Error(e.message ?: "Error")
+            }
+        }
+    }
+
+    fun deleteTask(task: Task) {
+        viewModelScope.launch {
+            try {
+                apartmentId?.let { repository.deleteTask(it, task.id) }
+            } catch (e: Exception) {
+                _tasksState.value = TaskUiState.Error(e.message ?: "Failed to delete task")
             }
         }
     }
