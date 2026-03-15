@@ -93,4 +93,14 @@ class InventoryViewModel(
         }
     }
 
+    fun deleteItem(item: InventoryItem) {
+        viewModelScope.launch {
+            try {
+                apartmentId?.let { repository.deleteInventoryItem(it, item.id) }
+            } catch (e: Exception) {
+                _inventoryState.value = InventoryUiState.Error(e.message ?: "Failed to delete")
+            }
+        }
+    }
+
 }

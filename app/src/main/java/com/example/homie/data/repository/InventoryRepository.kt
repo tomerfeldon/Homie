@@ -86,4 +86,13 @@ class InventoryRepository {
             .update("purchased", true)
             .await()
     }
+
+    suspend fun deleteInventoryItem(apartmentId: String, itemId: String) {
+        firestore.collection("apartments")
+            .document(apartmentId)
+            .collection("inventory")
+            .document(itemId)
+            .delete()
+            .await()
+    }
 }

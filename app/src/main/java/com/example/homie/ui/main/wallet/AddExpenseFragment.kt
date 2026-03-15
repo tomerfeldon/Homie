@@ -79,17 +79,14 @@ class AddExpenseFragment : Fragment() {
     }
 
     private fun validateAndSave() {
-
         val amountText = binding.etAmount.text.toString()
-
         if (amountText.isEmpty()) {
             Toast.makeText(requireContext(), "Enter amount", Toast.LENGTH_SHORT).show()
             return
         }
-
         val description = binding.etDescription.text.toString()
         val category = binding.spinnerCategory.selectedItem.toString()
-
+        progressDialog.show()
         viewModel.addExpense(
             amount = amountText.toDouble(),
             category = category,
@@ -99,27 +96,15 @@ class AddExpenseFragment : Fragment() {
     }
 
     private fun observeSaveState() {
-        viewModel.expenseSaveState.observe(viewLifecycleOwner) { state ->
-
-            when (state) {
-
-                is WalletUiState.Loading -> progressDialog.show()
-
-                is WalletUiState.Success -> {
-                    progressDialog.dismiss()
-                    Toast.makeText(requireContext(),
-                        "Expense Added", Toast.LENGTH_SHORT).show()
-                    findNavController().popBackStack()
-                }
-
-                is WalletUiState.Error -> {
-                    progressDialog.dismiss()
-                    Toast.makeText(requireContext(),
-                        state.message, Toast.LENGTH_LONG).show()
-                }
+        viewModel.expenseSaved.observe(viewLifecycleOwner) { saved ->
+            progressDialog.dismiss()
+            if (saved) {
+                Toast.makeText(requireContext(), "Expense Added", Toast.LENGTH_SHORT).show()
+                findNavController().popBackStack()
+            } else {
+                Toast.makeText(requireContext(), "Failed to save expense", Toast.LENGTH_LONG).show()
             }
         }
-
     }
 
     override fun onDestroyView() {

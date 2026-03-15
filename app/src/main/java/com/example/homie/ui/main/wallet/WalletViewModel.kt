@@ -1,16 +1,24 @@
 package com.example.homie.ui.main.wallet
 
 import android.net.Uri
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.homie.data.model.Expense
+import com.example.homie.data.model.MemberBalance
+import com.example.homie.data.model.User
+import com.example.homie.data.repository.WalletRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import java.util.*
+import java.util.UUID
 
-class WalletViewModel : ViewModel() {
+class WalletViewModel(
+    private val repository: WalletRepository = WalletRepository()
+) : ViewModel() {
 
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
@@ -19,179 +27,139 @@ class WalletViewModel : ViewModel() {
     private val _uiState = MutableLiveData<WalletUiState>()
     val uiState: LiveData<WalletUiState> = _uiState
 
-    private val _expenseSaveState = MutableLiveData<WalletUiState>()
-    val expenseSaveState: LiveData<WalletUiState> = _expenseSaveState
+    val expenseSaved = MutableLiveData<Boolean>()
 
-    // =========================
-    // Load Expenses (Safe + MVVM)
-    // =========================
+    private var cachedApartmentId: String? = null
+
+    private suspend fun getApartmentId(): String? {
+        if (cachedApartmentId == null) {
+            cachedApartmentId = repository.getApartmentId()
+        }
+        return cachedApartmentId
+    }
 
     fun loadExpenses() {
-
         _uiState.value = WalletUiState.Loading
-
         viewModelScope.launch {
             try {
-
-                val currentUser = auth.currentUser
-                    ?: throw Exception("User not logged in")
-
-                val userDoc = firestore.collection("users")
-                    .document(currentUser.uid)
-                    .get()
-                    .await()
-
-                val apartmentId = userDoc.getString("apartmentId")
-                    ?: throw Exception("No apartment found")
-
-                val apartmentDoc = firestore.collection("apartments")
-                    .document(apartmentId)
-                    .get()
-                    .await()
-
-                val members = apartmentDoc.get("members") as? List<String>
-                    ?: emptyList()
-
-                val memberNameMap = mutableMapOf<String, String>()
-
-                for (memberId in members) {
-                    val memberDoc = firestore.collection("users")
-                        .document(memberId)
-                        .get()
-                        .await()
-
-                    val name = memberDoc.getString("name") ?: "Unknown"
-                    memberNameMap[memberId] = name
-                }
-
-                val expensesSnapshot = firestore.collection("apartments")
-                    .document(apartmentId)
-                    .collection("expenses")
-                    .get()
-                    .await()
-
-                val expenses = expensesSnapshot.documents.mapNotNull {
-                    it.toObject(Expense::class.java)
-                }
-
-                val balanceSummary =
-                    calculateBalance(currentUser.uid, members, expenses, memberNameMap)
-
-                _uiState.value =
-                    WalletUiState.Success(expenses, balanceSummary)
-
+                val aptId = getApartmentId() ?: throw Exception("No apartment found")
+                val members = repository.getApartmentMembers(aptId)
+                val expenses = repository.getExpenses(aptId)
+                val balanceRows = calculateBalance(members, expenses)
+                _uiState.value = WalletUiState.Success(expenses, balanceRows)
             } catch (e: Exception) {
-                _uiState.value =
-                    WalletUiState.Error(e.message ?: "Unknown error")
+                _uiState.value = WalletUiState.Error(e.message ?: "Unknown error")
             }
         }
     }
-
-    // =========================
-    // Correct Balance Algorithm
-    // =========================
 
     private fun calculateBalance(
-        currentUserId: String,
-        members: List<String>,
-        expenses: List<Expense>,
-        nameMap: Map<String, String>
-    ): String {
-
-        if (members.isEmpty()) return "No members found"
-
+        members: List<User>,
+        expenses: List<Expense>
+    ): List<MemberBalance> {
+        if (members.isEmpty()) return emptyList()
         val balanceMap = mutableMapOf<String, Double>()
-
-        members.forEach { balanceMap[it] = 0.0 }
+        members.forEach { balanceMap[it.userId] = 0.0 }
 
         expenses.forEach { expense ->
-            val splitAmount = expense.amount / members.size
+            val splitAmong = if (expense.participants.isEmpty()) {
+                members
+            } else {
+                members.filter { it.userId in expense.participants }
+            }
+            if (splitAmong.isEmpty()) return@forEach
 
-            members.forEach { memberId ->
-                if (memberId == expense.payerId) {
-                    balanceMap[memberId] =
-                        balanceMap[memberId]!! + (expense.amount - splitAmount)
+            val perPersonShare = expense.amount / splitAmong.size
+            splitAmong.forEach { member ->
+                if (member.userId == expense.payerId) {
+                    balanceMap[member.userId] =
+                        balanceMap[member.userId]!! + (expense.amount - perPersonShare)
                 } else {
-                    balanceMap[memberId] =
-                        balanceMap[memberId]!! - splitAmount
+                    balanceMap[member.userId] =
+                        balanceMap[member.userId]!! - perPersonShare
                 }
             }
         }
 
-        return balanceMap.entries.joinToString("\n") {
-            val username = nameMap[it.key] ?: "Unknown"
-            "$username  : ₪ ${"%.2f".format(it.value)}"
+        return members.map { user ->
+            MemberBalance(user.userId, user.name, balanceMap[user.userId] ?: 0.0)
         }
     }
 
-    // =========================
-    // Add Expense (With Receipt Upload)
-    // =========================
-
-    fun addExpense(
-        amount: Double,
-        category: String,
-        description: String,
-        imageUri: Uri?
-    ) {
-
-        _expenseSaveState.value = WalletUiState.Loading
-
+    fun addExpense(amount: Double, category: String, description: String, imageUri: Uri?) {
         viewModelScope.launch {
             try {
-
-                val currentUser = auth.currentUser
-                    ?: throw Exception("User not logged in")
-
-                val userDoc = firestore.collection("users")
-                    .document(currentUser.uid)
-                    .get()
-                    .await()
-
-                val apartmentId = userDoc.getString("apartmentId")
-                    ?: throw Exception("No apartment found")
+                val currentUser = auth.currentUser ?: throw Exception("User not logged in")
+                val aptId = getApartmentId() ?: throw Exception("No apartment found")
 
                 var receiptUrl: String? = null
-
-                // Upload image if exists
                 if (imageUri != null) {
-
-                    val fileRef = storage.reference
-                        .child("receipts/${UUID.randomUUID()}.jpg")
-
+                    val fileRef = storage.reference.child("receipts/${UUID.randomUUID()}.jpg")
                     fileRef.putFile(imageUri).await()
-
                     receiptUrl = fileRef.downloadUrl.await().toString()
                 }
 
-                val expenseId = UUID.randomUUID().toString()
+                val userDoc = firestore.collection("users")
+                    .document(currentUser.uid).get().await()
+                val payerName = userDoc.getString("name") ?: currentUser.email ?: ""
 
+                val expenseId = UUID.randomUUID().toString()
                 val expense = Expense(
                     id = expenseId,
                     amount = amount,
                     category = category,
                     description = description,
                     payerId = currentUser.uid,
-                    payerName = currentUser.email ?: "",
+                    payerName = payerName,
                     receiptUrl = receiptUrl,
                     timestamp = System.currentTimeMillis()
                 )
-
-                firestore.collection("apartments")
-                    .document(apartmentId)
-                    .collection("expenses")
-                    .document(expenseId)
-                    .set(expense)
-                    .await()
-
-                _expenseSaveState.value =
-                    WalletUiState.Success(emptyList(), "Expense Added")
-
+                repository.addExpense(aptId, expense)
+                expenseSaved.value = true
                 loadExpenses()
-
             } catch (e: Exception) {
-                _expenseSaveState.value =
-                    WalletUiState.Error(e.message ?: "Failed to save")
+                expenseSaved.value = false
+            }
+        }
+    }
+
+    fun deleteExpense(expenseId: String) {
+        viewModelScope.launch {
+            try {
+                val aptId = getApartmentId() ?: return@launch
+                repository.deleteExpense(aptId, expenseId)
+                loadExpenses()
+            } catch (e: Exception) {
+                _uiState.value = WalletUiState.Error(e.message ?: "Failed to delete")
+            }
+        }
+    }
+
+    fun settleUp(fromUserId: String, fromName: String, amount: Double) {
+        viewModelScope.launch {
+            try {
+                val currentUser = auth.currentUser ?: throw Exception("User not logged in")
+                val aptId = getApartmentId() ?: throw Exception("No apartment found")
+
+                val userDoc = firestore.collection("users")
+                    .document(currentUser.uid).get().await()
+                val toName = userDoc.getString("name") ?: currentUser.email ?: ""
+
+                val expenseId = UUID.randomUUID().toString()
+                val settlement = Expense(
+                    id = expenseId,
+                    amount = amount,
+                    category = "Settlement",
+                    description = "$fromName → $toName",
+                    payerId = fromUserId,
+                    payerName = fromName,
+                    participants = listOf(fromUserId, currentUser.uid),
+                    timestamp = System.currentTimeMillis()
+                )
+                repository.addExpense(aptId, settlement)
+                loadExpenses()
+            } catch (e: Exception) {
+                _uiState.value = WalletUiState.Error(e.message ?: "Failed to settle")
             }
         }
     }
