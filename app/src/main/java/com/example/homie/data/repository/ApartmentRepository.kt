@@ -31,10 +31,9 @@ class ApartmentRepository {
 
             aptRef.set(apartment).await()
 
-            // Update user with apartmentId
             firestore.collection("users")
                 .document(userId)
-                .update("apartmentId", aptRef.id)
+                .set(mapOf("apartmentId" to aptRef.id), com.google.firebase.firestore.SetOptions.merge())
                 .await()
 
             Result.success(Unit)
@@ -68,7 +67,7 @@ class ApartmentRepository {
 
             firestore.collection("users")
                 .document(userId)
-                .update("apartmentId", aptId)
+                .set(mapOf("apartmentId" to aptId), com.google.firebase.firestore.SetOptions.merge())
                 .await()
 
             Result.success(Unit)
