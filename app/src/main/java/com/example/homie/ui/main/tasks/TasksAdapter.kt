@@ -11,6 +11,7 @@ class TasksAdapter(
 ) : RecyclerView.Adapter<TasksAdapter.TaskViewHolder>() {
 
     private val taskList = mutableListOf<Task>()
+    val currentList: List<Task> get() = taskList
 
     fun submitList(list: List<Task>) {
         taskList.clear()

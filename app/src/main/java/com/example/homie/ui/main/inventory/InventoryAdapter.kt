@@ -11,6 +11,7 @@ class InventoryAdapter(
 ) : RecyclerView.Adapter<InventoryAdapter.InventoryViewHolder>() {
 
     private val list = mutableListOf<InventoryItem>()
+    val currentList: List<InventoryItem> get() = list
 
     fun submitList(data: List<InventoryItem>) {
         list.clear()

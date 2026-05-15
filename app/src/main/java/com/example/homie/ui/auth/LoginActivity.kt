@@ -98,9 +98,7 @@ class LoginActivity : AppCompatActivity() {
         emailInput.hint = "Email"
         emailInput.inputType = android.text.InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
         val container = android.widget.FrameLayout(this).apply {
-            val padding = resources.getDimensionPixelSize(
-                com.google.android.material.R.dimen.m3_alert_dialog_action_spacing
-            )
+            val padding = (16 * resources.displayMetrics.density).toInt()
             setPadding(padding, 0, padding, 0)
             addView(emailInput)
         }

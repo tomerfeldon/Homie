@@ -9,6 +9,7 @@ import com.example.homie.databinding.ItemExpenseBinding
 class ExpenseAdapter : RecyclerView.Adapter<ExpenseAdapter.ViewHolder>() {
 
     private val list = mutableListOf<Expense>()
+    val currentList: List<Expense> get() = list
 
     fun submitList(data: List<Expense>) {
         list.clear()
