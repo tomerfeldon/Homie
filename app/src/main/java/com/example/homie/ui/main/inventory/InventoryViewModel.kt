@@ -54,6 +54,21 @@ class InventoryViewModel(
         }
     }
 
+    fun addItems(items: List<Pair<String, Int>>) {
+        viewModelScope.launch {
+            _addItemState.value = InventoryUiState.Loading
+            try {
+                val aptId = repository.getApartmentId()
+                    ?: run { _addItemState.value = InventoryUiState.Error("Apartment not found"); return@launch }
+                apartmentId = aptId
+                items.forEach { (name, qty) -> repository.addItem(aptId, name, qty) }
+                _addItemState.value = InventoryUiState.Success(Unit)
+            } catch (e: Exception) {
+                _addItemState.value = InventoryUiState.Error(e.message ?: "Failed to add items")
+            }
+        }
+    }
+
     fun addItem(name: String, quantity: Int) {
 
         viewModelScope.launch {

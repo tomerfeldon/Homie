@@ -25,7 +25,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            android:text="Add Item"
+            android:text="Add Items"
             android:textColor="@color/white"
             android:textSize="18sp"
             android:textStyle="bold" />
@@ -44,43 +44,23 @@
             android:orientation="vertical"
             android:padding="20dp">
 
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/inputOuterFieldStyle"
+            <!-- Dynamic rows container -->
+            <LinearLayout
+                android:id="@+id/llItemsContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColorHint="@color/app_color"
-                app:boxStrokeColor="@color/app_color"
-                app:hintTextColor="@color/app_color">
+                android:orientation="vertical" />
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etItemName"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Item Name"
-                    android:inputType="text"
-                    android:textColor="@color/app_color"
-                    android:visibility="visible" />
-
-            </com.google.android.material.textfield.TextInputLayout>
-            <com.google.android.material.textfield.TextInputLayout
-                style="@style/inputOuterFieldStyle"
-                android:layout_width="match_parent"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnAddRow"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:textColorHint="@color/app_color"
-                app:boxStrokeColor="@color/app_color"
-                app:hintTextColor="@color/app_color">
-
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etQuantity"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Quantity"
-                    android:inputType="number"
-                    android:textColor="@color/app_color"
-                    android:visibility="visible" />
-
-            </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginTop="16dp"
+                android:text="+ Add another item"
+                android:textAllCaps="false"
+                app:strokeColor="@color/app_color"
+                android:textColor="@color/app_color" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSaveItem"
@@ -90,7 +70,7 @@
                 android:layout_marginTop="30dp"
                 android:layout_marginBottom="5dp"
                 android:backgroundTint="@color/app_color"
-                android:text="Save Item"
+                android:text="Save Items"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 app:cornerRadius="20dp" />
