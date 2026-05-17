@@ -1,5 +1,6 @@
 package com.example.homie.data.repository
 
+import android.util.Log
 import com.example.homie.data.model.Task
 import com.example.homie.data.model.User
 import com.example.homie.ui.main.tasks.TaskUiState
@@ -91,14 +92,20 @@ class TasksRepository {
             .set(task)
             .await()
 
+        Log.d("HomieNotif", "addTask: assignedToId='$assignedToId', currentUid='${user.uid}'")
         if (assignedToId.isNotBlank() && assignedToId != user.uid) {
+            Log.d("HomieNotif", "addTask: sending notification to $assignedToId")
             try {
                 notificationsRepository.notifyUser(
                     recipientId = assignedToId,
                     title = "New task assigned",
                     body = "${user.email ?: "Someone"} assigned you: $title"
                 )
-            } catch (_: Exception) { }
+            } catch (e: Exception) {
+                Log.e("HomieNotif", "addTask: outer catch swallowed: ${e.message}", e)
+            }
+        } else {
+            Log.d("HomieNotif", "addTask: SKIPPED notification (blank or self-assigned)")
         }
     }
 

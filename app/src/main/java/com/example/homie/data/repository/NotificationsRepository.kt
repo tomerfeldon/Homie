@@ -1,5 +1,6 @@
 package com.example.homie.data.repository
 
+import android.util.Log
 import com.example.homie.data.model.NotificationItem
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -44,6 +45,7 @@ class NotificationsRepository {
     }
 
     suspend fun notifyUser(recipientId: String, title: String, body: String): Result<Unit> {
+        Log.d("HomieNotif", "notifyUser called: recipient=$recipientId, title=$title")
         return try {
             val ref = notificationsRef(recipientId).document()
             val item = NotificationItem(
@@ -54,13 +56,16 @@ class NotificationsRepository {
                 read = false
             )
             ref.set(item).await()
+            Log.d("HomieNotif", "notifyUser SUCCESS: wrote ${ref.id} to users/$recipientId/notifications")
             Result.success(Unit)
         } catch (e: Exception) {
+            Log.e("HomieNotif", "notifyUser FAILED for recipient=$recipientId: ${e.message}", e)
             Result.failure(e)
         }
     }
 
     suspend fun notifyUsers(recipientIds: List<String>, title: String, body: String) {
+        Log.d("HomieNotif", "notifyUsers called with ${recipientIds.size} recipients: $recipientIds")
         recipientIds.forEach { notifyUser(it, title, body) }
     }
 
