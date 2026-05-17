@@ -62,7 +62,7 @@ class DashboardRepository {
 
             val urgentTasks = tasksSnapshot.documents
                 .mapNotNull { it.toObject(Task::class.java)?.copy(id = it.id) }
-                .filter { !it.completed }
+                .filter { !it.completed && it.assignedTo == userId }
                 .take(3)
 
             // Get expenses
