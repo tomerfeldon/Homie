@@ -53,11 +53,30 @@ class WalletRepository {
     }
 
     suspend fun deleteExpense(aptId: String, expenseId: String) {
+        val user = auth.currentUser
+        val expenseDoc = firestore.collection("apartments")
+            .document(aptId).collection("expenses").document(expenseId).get().await()
+        val description = expenseDoc.getString("description") ?: "an expense"
+        val amount = expenseDoc.getDouble("amount")
+
         firestore.collection("apartments")
-            .document(aptId)
-            .collection("expenses")
-            .document(expenseId)
+            .document(aptId).collection("expenses").document(expenseId)
             .delete().await()
+
+        try {
+            val actorName = user?.uid?.let {
+                firestore.collection("users").document(it).get().await().getString("name")
+            }?.takeIf { it.isNotBlank() } ?: user?.email ?: "Someone"
+            val aptDoc = firestore.collection("apartments").document(aptId).get().await()
+            val memberIds = aptDoc.get("members") as? List<String> ?: emptyList()
+            val recipients = memberIds.filter { it.isNotBlank() && it != user?.uid }
+            val amountStr = if (amount != null) "₪$amount - " else ""
+            notificationsRepository.notifyUsers(
+                recipientIds = recipients,
+                title = "Expense deleted",
+                body = "$actorName deleted expense: $amountStr$description"
+            )
+        } catch (_: Exception) { }
     }
 
     suspend fun getApartmentMembers(aptId: String): List<User> {

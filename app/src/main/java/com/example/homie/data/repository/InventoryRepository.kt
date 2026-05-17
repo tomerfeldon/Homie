@@ -96,6 +96,10 @@ class InventoryRepository {
         apartmentId: String,
         itemId: String
     ) {
+        val user = auth.currentUser
+        val itemDoc = firestore.collection("apartments")
+            .document(apartmentId).collection("inventory").document(itemId).get().await()
+        val itemName = itemDoc.getString("name") ?: "an item"
 
         firestore.collection("apartments")
             .document(apartmentId)
@@ -103,6 +107,20 @@ class InventoryRepository {
             .document(itemId)
             .set(mapOf("purchased" to true), SetOptions.merge())
             .await()
+
+        try {
+            val actorName = user?.uid?.let {
+                firestore.collection("users").document(it).get().await().getString("name")
+            }?.takeIf { it.isNotBlank() } ?: user?.email ?: "Someone"
+            val aptDoc = firestore.collection("apartments").document(apartmentId).get().await()
+            val memberIds = aptDoc.get("members") as? List<String> ?: emptyList()
+            val recipients = memberIds.filter { it.isNotBlank() && it != user?.uid }
+            notificationsRepository.notifyUsers(
+                recipientIds = recipients,
+                title = "Item purchased",
+                body = "$actorName purchased: $itemName"
+            )
+        } catch (_: Exception) { }
     }
 
     suspend fun deleteInventoryItem(apartmentId: String, itemId: String) {

@@ -115,12 +115,28 @@ class TasksRepository {
     }
 
     suspend fun deleteTask(apartmentId: String, taskId: String) {
+        val user = auth.currentUser
+        val taskDoc = firestore.collection("apartments")
+            .document(apartmentId).collection("tasks").document(taskId).get().await()
+        val taskTitle = taskDoc.getString("title") ?: "a task"
+
         firestore.collection("apartments")
-            .document(apartmentId)
-            .collection("tasks")
-            .document(taskId)
-            .delete()
-            .await()
+            .document(apartmentId).collection("tasks").document(taskId)
+            .delete().await()
+
+        try {
+            val actorName = user?.uid?.let {
+                firestore.collection("users").document(it).get().await().getString("name")
+            }?.takeIf { it.isNotBlank() } ?: user?.email ?: "Someone"
+            val aptDoc = firestore.collection("apartments").document(apartmentId).get().await()
+            val memberIds = aptDoc.get("members") as? List<String> ?: emptyList()
+            val recipients = memberIds.filter { it.isNotBlank() && it != user?.uid }
+            notificationsRepository.notifyUsers(
+                recipientIds = recipients,
+                title = "Task deleted",
+                body = "$actorName deleted task: $taskTitle"
+            )
+        } catch (_: Exception) { }
     }
 
     suspend fun completeTask(apartmentId: String, task: Task) {
@@ -137,5 +153,19 @@ class TasksRepository {
             batch.set(taskRef, mapOf("completed" to true), SetOptions.merge())
             batch.set(userRef, mapOf("streak" to FieldValue.increment(1)), SetOptions.merge())
         }.await()
+
+        try {
+            val actorName = firestore.collection("users").document(uid)
+                .get().await().getString("name")
+                ?.takeIf { it.isNotBlank() } ?: auth.currentUser?.email ?: "Someone"
+            val aptDoc = firestore.collection("apartments").document(apartmentId).get().await()
+            val memberIds = aptDoc.get("members") as? List<String> ?: emptyList()
+            val recipients = memberIds.filter { it.isNotBlank() && it != uid }
+            notificationsRepository.notifyUsers(
+                recipientIds = recipients,
+                title = "Task completed",
+                body = "$actorName completed: ${task.title}"
+            )
+        } catch (_: Exception) { }
     }
 }
