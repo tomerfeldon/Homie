@@ -37,8 +37,9 @@ class WalletRepository {
         try {
             val currentUid = auth.currentUser?.uid
             val actor = auth.currentUser?.email ?: "Someone"
-            val recipients = getApartmentMembers(aptId)
-                .mapNotNull { it.userId.takeIf { uid -> uid.isNotBlank() && uid != currentUid } }
+            val aptDoc = firestore.collection("apartments").document(aptId).get().await()
+            val memberIds = aptDoc.get("members") as? List<String> ?: emptyList()
+            val recipients = memberIds.filter { it.isNotBlank() && it != currentUid }
             notificationsRepository.notifyUsers(
                 recipientIds = recipients,
                 title = "New expense added",

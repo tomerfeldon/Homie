@@ -39,6 +39,7 @@ class TasksRepository {
                 .get()
                 .await()
                 .toObject(User::class.java)
+                ?.copy(userId = uid)
         }
     }
 
