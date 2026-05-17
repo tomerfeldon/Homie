@@ -15,7 +15,9 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.homie.R
+import com.example.homie.data.model.User
 import com.example.homie.databinding.FragmentTasksBinding
+import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
 
@@ -52,20 +54,15 @@ class TasksFragment : Fragment() {
         progressDialog.setCancelable(false)
 
         viewModel.loadTasks()
+        viewModel.loadMembers()
 
         viewModel.tasksState.observe(viewLifecycleOwner) { state ->
-
             when (state) {
-
-                is TaskUiState.Loading -> {
-                    progressDialog.show()
-                }
-
+                is TaskUiState.Loading -> progressDialog.show()
                 is TaskUiState.Success -> {
                     progressDialog.dismiss()
                     adapter.submitList(state.data)
                 }
-
                 is TaskUiState.Error -> {
                     progressDialog.dismiss()
                     Toast.makeText(requireContext(), state.message, Toast.LENGTH_SHORT).show()
@@ -73,12 +70,59 @@ class TasksFragment : Fragment() {
             }
         }
 
+        viewModel.membersState.observe(viewLifecycleOwner) { members ->
+            buildFilterChips(members)
+        }
 
         binding.fabAddTask.setOnClickListener {
             findNavController().navigate(R.id.action_navigation_tasks_to_addTaskFragment)
         }
 
         setupSwipeToDelete()
+    }
+
+    private fun buildFilterChips(members: List<User>) {
+        val group = binding.chipGroupFilter
+        group.removeAllViews()
+
+        val memberChips = members.map { member ->
+            Chip(requireContext()).apply {
+                text = member.name.ifEmpty { member.email }
+                isCheckable = true
+                isChecked = false
+                tag = member.userId
+            }
+        }
+
+        val allChip = Chip(requireContext()).apply {
+            text = getString(R.string.filter_all)
+            isCheckable = true
+            isChecked = true
+        }
+
+        allChip.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                memberChips.forEach { it.isChecked = false }
+                viewModel.setFilter(emptySet())
+            } else if (memberChips.none { it.isChecked }) {
+                allChip.isChecked = true
+            }
+        }
+
+        memberChips.forEach { chip ->
+            chip.setOnCheckedChangeListener { _, _ ->
+                val checked = memberChips.filter { it.isChecked }.map { it.tag as String }.toSet()
+                if (checked.isEmpty()) {
+                    allChip.isChecked = true
+                } else {
+                    allChip.isChecked = false
+                    viewModel.setFilter(checked)
+                }
+            }
+        }
+
+        group.addView(allChip)
+        memberChips.forEach { group.addView(it) }
     }
 
     private fun setupSwipeToDelete() {

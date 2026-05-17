@@ -27,6 +27,20 @@ class TasksViewModel(
 
     private var tasksListener: ListenerRegistration? = null
 
+    private var allTasks: List<Task> = emptyList()
+    private var selectedAssigneeIds: Set<String> = emptySet()
+
+    fun setFilter(ids: Set<String>) {
+        selectedAssigneeIds = ids
+        applyFilter()
+    }
+
+    private fun applyFilter() {
+        val filtered = if (selectedAssigneeIds.isEmpty()) allTasks
+                       else allTasks.filter { it.assignedTo in selectedAssigneeIds }
+        _tasksState.postValue(TaskUiState.Success(filtered))
+    }
+
     suspend fun ensureApartmentLoaded(): Boolean {
         if (apartmentId == null) {
             apartmentId = repository.getApartmentId()
@@ -72,7 +86,12 @@ class TasksViewModel(
             apartmentId?.let { aptId ->
                 tasksListener?.remove()
                 tasksListener = repository.observeTasks(aptId) { state ->
-                    _tasksState.postValue(state)
+                    if (state is TaskUiState.Success) {
+                        allTasks = state.data
+                        applyFilter()
+                    } else {
+                        _tasksState.postValue(state)
+                    }
                 }
             } ?: run {
                 _tasksState.value = TaskUiState.Error("Apartment not found")
