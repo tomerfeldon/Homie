@@ -9,7 +9,17 @@
         android:id="@+id/navigation_dashboard"
         android:name="com.example.homie.ui.main.dashboard.DashboardFragment"
         android:label="@string/title_dashboard"
-        tools:layout="@layout/fragment_dashboard" />
+        tools:layout="@layout/fragment_dashboard">
+        <action
+            android:id="@+id/action_dashboard_to_settings"
+            app:destination="@id/apartmentSettingsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/apartmentSettingsFragment"
+        android:name="com.example.homie.ui.main.dashboard.ApartmentSettingsFragment"
+        android:label="Apartment Settings"
+        tools:layout="@layout/fragment_apartment_settings" />
 
     <navigation
         android:id="@+id/navigation_wallet"

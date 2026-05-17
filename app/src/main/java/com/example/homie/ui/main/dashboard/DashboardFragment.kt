@@ -10,7 +10,9 @@ import android.view.*
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.homie.R
 import com.example.homie.databinding.FragmentDashboardBinding
 import com.example.homie.ui.auth.LoginActivity
 import com.example.homie.ui.onboarding.ApartmentChoiceActivity
@@ -52,6 +54,10 @@ class DashboardFragment : Fragment() {
                 clipboard.setPrimaryClip(clip)
                 Toast.makeText(requireContext(), "Invite code copied!", Toast.LENGTH_SHORT).show()
             }
+        }
+
+        binding.ivSettings.setOnClickListener {
+            findNavController().navigate(R.id.action_dashboard_to_settings)
         }
 
         binding.ivLogout.setOnClickListener {
@@ -148,6 +154,11 @@ class DashboardFragment : Fragment() {
                 }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.loadDashboard()
     }
 
     override fun onDestroyView() {
