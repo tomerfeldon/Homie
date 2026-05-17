@@ -81,9 +81,7 @@ class AddTaskFragment : Fragment() {
 
         viewModel.membersState.observe(viewLifecycleOwner) { members ->
             val currentUid = FirebaseAuth.getInstance().currentUser?.uid
-            val sortedMembers = members.sortedWith(
-                compareByDescending { it.userId == currentUid }
-            )
+            val sortedMembers = members.filter { it.userId != currentUid }
             membersList = sortedMembers
             val names = sortedMembers.map { it.name.ifEmpty { it.email } }
             val spinnerAdapter = android.widget.ArrayAdapter(
