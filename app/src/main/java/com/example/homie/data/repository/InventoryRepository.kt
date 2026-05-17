@@ -5,6 +5,7 @@ import com.example.homie.ui.main.inventory.InventoryUiState
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
@@ -83,7 +84,7 @@ class InventoryRepository {
             .document(apartmentId)
             .collection("inventory")
             .document(itemId)
-            .update("purchased", true)
+            .set(mapOf("purchased" to true), SetOptions.merge())
             .await()
     }
 

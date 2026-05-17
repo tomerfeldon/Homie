@@ -3,6 +3,7 @@ package com.example.homie.ui.main.inventory
 import androidx.lifecycle.*
 import com.example.homie.data.model.InventoryItem
 import com.example.homie.data.repository.InventoryRepository
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 
 class InventoryViewModel(
@@ -25,6 +26,7 @@ class InventoryViewModel(
         _purchaseState
 
     private var apartmentId: String? = null
+    private var inventoryListener: ListenerRegistration? = null
 
     fun loadInventory() {
 
@@ -36,7 +38,8 @@ class InventoryViewModel(
                 apartmentId = repository.getApartmentId()
 
                 apartmentId?.let { aptId ->
-                    repository.observeInventory(aptId) { state ->
+                    inventoryListener?.remove()
+                    inventoryListener = repository.observeInventory(aptId) { state ->
                         _inventoryState.postValue(state)
                     }
                 } ?: run {
@@ -101,6 +104,11 @@ class InventoryViewModel(
                 _inventoryState.value = InventoryUiState.Error(e.message ?: "Failed to delete")
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        inventoryListener?.remove()
     }
 
 }

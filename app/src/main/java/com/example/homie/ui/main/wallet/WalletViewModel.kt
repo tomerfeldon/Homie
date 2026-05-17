@@ -27,7 +27,7 @@ class WalletViewModel(
     private val _uiState = MutableLiveData<WalletUiState>()
     val uiState: LiveData<WalletUiState> = _uiState
 
-    val expenseSaved = MutableLiveData<Boolean>()
+    val expenseSaved = MutableLiveData<Boolean?>()
 
     private var cachedApartmentId: String? = null
 
@@ -70,20 +70,24 @@ class WalletViewModel(
             if (splitAmong.isEmpty()) return@forEach
 
             val perPersonShare = expense.amount / splitAmong.size
+
+            // Credit payer the full amount first
+            balanceMap[expense.payerId] =
+                (balanceMap[expense.payerId] ?: 0.0) + expense.amount
+
+            // Deduct each participant's share (including payer if they are a participant)
             splitAmong.forEach { member ->
-                if (member.userId == expense.payerId) {
-                    balanceMap[member.userId] =
-                        balanceMap[member.userId]!! + (expense.amount - perPersonShare)
-                } else {
-                    balanceMap[member.userId] =
-                        balanceMap[member.userId]!! - perPersonShare
-                }
+                balanceMap[member.userId] = balanceMap[member.userId]!! - perPersonShare
             }
         }
 
         return members.map { user ->
             MemberBalance(user.userId, user.name, balanceMap[user.userId] ?: 0.0)
         }
+    }
+
+    fun clearExpenseSaved() {
+        expenseSaved.value = null
     }
 
     fun addExpense(amount: Double, category: String, description: String, imageUri: Uri?) {

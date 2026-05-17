@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.homie.data.model.Task
 import com.example.homie.data.model.User
 import com.example.homie.data.repository.TasksRepository
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.launch
 
 class TasksViewModel(
@@ -23,6 +24,8 @@ class TasksViewModel(
 
     private val _membersState = MutableLiveData<List<User>>()
     val membersState: LiveData<List<User>> = _membersState
+
+    private var tasksListener: ListenerRegistration? = null
 
     suspend fun ensureApartmentLoaded(): Boolean {
         if (apartmentId == null) {
@@ -67,7 +70,8 @@ class TasksViewModel(
             apartmentId = repository.getApartmentId()
 
             apartmentId?.let { aptId ->
-                repository.observeTasks(aptId) { state ->
+                tasksListener?.remove()
+                tasksListener = repository.observeTasks(aptId) { state ->
                     _tasksState.postValue(state)
                 }
             } ?: run {
@@ -96,5 +100,10 @@ class TasksViewModel(
                 _tasksState.value = TaskUiState.Error(e.message ?: "Failed to delete task")
             }
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        tasksListener?.remove()
     }
 }

@@ -6,6 +6,8 @@ import com.example.homie.ui.main.tasks.TaskUiState
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
@@ -42,8 +44,8 @@ class TasksRepository {
     fun observeTasks(
         apartmentId: String,
         onResult: (TaskUiState<List<Task>>) -> Unit
-    ) {
-        firestore.collection("apartments")
+    ): ListenerRegistration {
+        return firestore.collection("apartments")
             .document(apartmentId)
             .collection("tasks")
             .addSnapshotListener { snapshot, error ->
@@ -108,8 +110,8 @@ class TasksRepository {
         val userRef = firestore.collection("users").document(uid)
 
         firestore.runBatch { batch ->
-            batch.update(taskRef, "completed", true)
-            batch.update(userRef, "streak", FieldValue.increment(1))
+            batch.set(taskRef, mapOf("completed" to true), SetOptions.merge())
+            batch.set(userRef, mapOf("streak" to FieldValue.increment(1)), SetOptions.merge())
         }.await()
     }
 }

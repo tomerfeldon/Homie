@@ -7,7 +7,7 @@ import android.view.*
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.homie.databinding.FragmentAddExpenseBinding
@@ -17,7 +17,7 @@ class AddExpenseFragment : Fragment() {
     private var _binding: FragmentAddExpenseBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: WalletViewModel by viewModels()
+    private val viewModel: WalletViewModel by activityViewModels()
 
     private var selectedImageUri: Uri? = null
     private lateinit var progressDialog: ProgressDialog
@@ -97,6 +97,8 @@ class AddExpenseFragment : Fragment() {
 
     private fun observeSaveState() {
         viewModel.expenseSaved.observe(viewLifecycleOwner) { saved ->
+            saved ?: return@observe
+            viewModel.clearExpenseSaved()
             progressDialog.dismiss()
             if (saved) {
                 Toast.makeText(requireContext(), "Expense Added", Toast.LENGTH_SHORT).show()

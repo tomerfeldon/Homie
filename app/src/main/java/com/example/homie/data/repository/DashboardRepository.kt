@@ -46,9 +46,11 @@ class DashboardRepository {
                     .get()
                     .await()
 
-                memberDoc.toObject(User::class.java)?.let {
-                    members.add(it)
-                }
+                val raw = memberDoc.toObject(User::class.java) ?: continue
+                members.add(raw.copy(
+                    userId = raw.userId.ifBlank { memberId },
+                    name = raw.name.ifBlank { raw.email }
+                ))
             }
 
             // Get tasks
@@ -73,7 +75,7 @@ class DashboardRepository {
             val expenses = expensesSnapshot.documents
                 .mapNotNull { it.toObject(Expense::class.java) }
 
-            val debtText = calculateDebt(userId, members.size, expenses)
+            val debtText = calculateDebt(userId, members, expenses)
 
             Result.success(
                 DashboardData(
@@ -92,21 +94,33 @@ class DashboardRepository {
 
     private fun calculateDebt(
         currentUserId: String,
-        memberCount: Int,
+        members: List<User>,
         expenses: List<Expense>
     ): String {
+        if (members.isEmpty()) return "All settled 🎉"
 
-        if (memberCount == 0) return "All settled 🎉"
+        var balance = 0.0
 
-        val totalAmount = expenses.sumOf { it.amount }
+        expenses.forEach { expense ->
+            val splitAmong = if (expense.participants.isEmpty()) {
+                members
+            } else {
+                members.filter { it.userId in expense.participants }
+            }
+            if (splitAmong.isEmpty()) return@forEach
 
-        val perPersonShare = totalAmount / memberCount
+            val perPersonShare = expense.amount / splitAmong.size
+            val isParticipant = splitAmong.any { it.userId == currentUserId }
 
-        val userPaid = expenses
-            .filter { it.payerId == currentUserId }
-            .sumOf { it.amount }
-
-        val balance = userPaid - perPersonShare
+            when {
+                expense.payerId == currentUserId && isParticipant ->
+                    balance += expense.amount - perPersonShare
+                expense.payerId == currentUserId && !isParticipant ->
+                    balance += expense.amount
+                isParticipant ->
+                    balance -= perPersonShare
+            }
+        }
 
         return when {
             balance > 0 -> "You are owed ₪%.2f".format(balance)

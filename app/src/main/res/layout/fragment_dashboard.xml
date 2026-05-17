@@ -222,6 +222,19 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnLeaveApartment"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/spacing_base"
+                android:layout_marginBottom="@dimen/spacing_base"
+                android:text="Leave Apartment"
+                android:textColor="@color/error"
+                app:icon="@drawable/baseline_logout_24"
+                app:iconTint="@color/error"
+                app:strokeColor="@color/error" />
+
         </LinearLayout>
 
     </ScrollView>

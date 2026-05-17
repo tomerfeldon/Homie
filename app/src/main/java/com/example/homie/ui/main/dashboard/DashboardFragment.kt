@@ -13,6 +13,8 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.homie.databinding.FragmentDashboardBinding
 import com.example.homie.ui.auth.LoginActivity
+import com.example.homie.ui.onboarding.ApartmentChoiceActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
 
 class DashboardFragment : Fragment() {
@@ -57,6 +59,34 @@ class DashboardFragment : Fragment() {
             startActivity(Intent(requireActivity(), LoginActivity::class.java))
             requireActivity().finishAffinity()
         }
+
+        binding.btnLeaveApartment.setOnClickListener {
+            showLeaveApartmentConfirmation()
+        }
+
+        viewModel.leaveState.observe(viewLifecycleOwner) { result ->
+            if (progressDialog.isShowing) progressDialog.dismiss()
+            result.onSuccess {
+                startActivity(Intent(requireActivity(), ApartmentChoiceActivity::class.java))
+                requireActivity().finishAffinity()
+            }
+            result.onFailure {
+                Toast.makeText(requireContext(), it.message ?: "Failed to leave apartment", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    private fun showLeaveApartmentConfirmation() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Leave Apartment?")
+            .setMessage("You will be removed from this apartment. You can create or join a new one afterwards.")
+            .setPositiveButton("Leave") { _, _ ->
+                progressDialog.setMessage("Leaving apartment...")
+                progressDialog.show()
+                viewModel.leaveApartment()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun setupRecyclerViews() {

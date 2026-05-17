@@ -34,7 +34,7 @@ class ApartmentRepository {
             // Update user with apartmentId
             firestore.collection("users")
                 .document(userId)
-                .update("apartmentId", aptRef.id)
+                .set(mapOf("apartmentId" to aptRef.id), com.google.firebase.firestore.SetOptions.merge())
                 .await()
 
             Result.success(Unit)
@@ -68,7 +68,37 @@ class ApartmentRepository {
 
             firestore.collection("users")
                 .document(userId)
-                .update("apartmentId", aptId)
+                .set(mapOf("apartmentId" to aptId), com.google.firebase.firestore.SetOptions.merge())
+                .await()
+
+            Result.success(Unit)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun leaveApartment(): Result<Unit> {
+        return try {
+            val userId = auth.currentUser?.uid
+                ?: return Result.failure(Exception("User not logged in"))
+
+            val userDoc = firestore.collection("users")
+                .document(userId)
+                .get()
+                .await()
+
+            val apartmentId = userDoc.getString("apartmentId")
+                ?: return Result.failure(Exception("No apartment found"))
+
+            firestore.collection("apartments")
+                .document(apartmentId)
+                .update("members", com.google.firebase.firestore.FieldValue.arrayRemove(userId))
+                .await()
+
+            firestore.collection("users")
+                .document(userId)
+                .set(mapOf("apartmentId" to null), com.google.firebase.firestore.SetOptions.merge())
                 .await()
 
             Result.success(Unit)
