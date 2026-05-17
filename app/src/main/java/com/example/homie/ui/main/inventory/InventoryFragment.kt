@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.*
+import android.widget.EditText
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -46,9 +47,10 @@ class InventoryFragment : Fragment() {
         progressDialog.setMessage("Loading...")
         progressDialog.setCancelable(false)
 
-        adapter = InventoryAdapter { item, _ ->
-            showAddToWalletDialog(item)
-        }
+        adapter = InventoryAdapter(
+            onPurchased = { item, _ -> showAddToWalletDialog(item) },
+            onEditQuantity = { item -> showEditQuantityDialog(item) }
+        )
 
         binding.rvInventory.layoutManager = LinearLayoutManager(requireContext())
         binding.rvInventory.adapter = adapter
@@ -153,6 +155,33 @@ class InventoryFragment : Fragment() {
             }
         }
         ItemTouchHelper(swipeCallback).attachToRecyclerView(binding.rvInventory)
+    }
+
+    private fun showEditQuantityDialog(item: InventoryItem) {
+        val input = EditText(requireContext()).apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            setText(item.quantity.toString())
+            selectAll()
+        }
+        val container = android.widget.FrameLayout(requireContext()).apply {
+            val padding = (20 * resources.displayMetrics.density).toInt()
+            setPadding(padding, 0, padding, 0)
+            addView(input)
+        }
+
+        com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Edit quantity: ${item.name}")
+            .setView(container)
+            .setPositiveButton("Save") { _, _ ->
+                val newQty = input.text.toString().toIntOrNull()
+                if (newQty != null && newQty > 0) {
+                    viewModel.updateQuantity(item, newQty)
+                } else {
+                    Toast.makeText(requireContext(), "Enter a valid quantity", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun showAddToWalletDialog(item: InventoryItem) {

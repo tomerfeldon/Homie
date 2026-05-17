@@ -123,6 +123,15 @@ class InventoryRepository {
         } catch (_: Exception) { }
     }
 
+    suspend fun updateQuantity(apartmentId: String, itemId: String, quantity: Int) {
+        firestore.collection("apartments")
+            .document(apartmentId)
+            .collection("inventory")
+            .document(itemId)
+            .set(mapOf("quantity" to quantity), SetOptions.merge())
+            .await()
+    }
+
     suspend fun deleteInventoryItem(apartmentId: String, itemId: String) {
         firestore.collection("apartments")
             .document(apartmentId)

@@ -7,7 +7,8 @@ import com.example.homie.data.model.InventoryItem
 import com.example.homie.databinding.ItemInventoryBinding
 
 class InventoryAdapter(
-    private val onPurchased: (InventoryItem, Boolean) -> Unit
+    private val onPurchased: (InventoryItem, Boolean) -> Unit,
+    private val onEditQuantity: (InventoryItem) -> Unit
 ) : RecyclerView.Adapter<InventoryAdapter.InventoryViewHolder>() {
 
     private val list = mutableListOf<InventoryItem>()
@@ -34,7 +35,6 @@ class InventoryAdapter(
     override fun getItemCount() = list.size
 
     override fun onBindViewHolder(holder: InventoryViewHolder, position: Int) {
-
         val item = list[position]
 
         holder.binding.checkPurchased.text = item.name
@@ -43,11 +43,14 @@ class InventoryAdapter(
         holder.binding.tvAddedBy.text = "Added by ${item.addedByName}"
 
         holder.binding.checkPurchased.setOnCheckedChangeListener(null)
-
         holder.binding.checkPurchased.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked && !item.purchased) {
                 onPurchased(item, true)
             }
+        }
+
+        holder.binding.ivEditQuantity.setOnClickListener {
+            onEditQuantity(item)
         }
     }
 }
