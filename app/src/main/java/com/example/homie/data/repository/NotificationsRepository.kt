@@ -37,7 +37,15 @@ class NotificationsRepository {
         return try {
             val userId = auth.currentUser?.uid
                 ?: return Result.failure(Exception("User not logged in"))
-            val ref = notificationsRef(userId).document()
+            notifyUser(userId, title, body)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun notifyUser(recipientId: String, title: String, body: String): Result<Unit> {
+        return try {
+            val ref = notificationsRef(recipientId).document()
             val item = NotificationItem(
                 id = ref.id,
                 title = title,
@@ -50,6 +58,10 @@ class NotificationsRepository {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    suspend fun notifyUsers(recipientIds: List<String>, title: String, body: String) {
+        recipientIds.forEach { notifyUser(it, title, body) }
     }
 
     suspend fun markAsRead(notificationId: String): Result<Unit> {

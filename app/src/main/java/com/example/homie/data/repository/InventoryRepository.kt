@@ -13,6 +13,7 @@ class InventoryRepository {
 
     private val firestore = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private val notificationsRepository = NotificationsRepository()
 
     suspend fun getApartmentId(): String? {
         val uid = auth.currentUser?.uid ?: return null
@@ -73,6 +74,17 @@ class InventoryRepository {
             .document(itemId)
             .set(item)
             .await()
+
+        try {
+            val aptDoc = firestore.collection("apartments").document(apartmentId).get().await()
+            val memberIds = aptDoc.get("members") as? List<String> ?: emptyList()
+            val recipients = memberIds.filter { it.isNotBlank() && it != user.uid }
+            notificationsRepository.notifyUsers(
+                recipientIds = recipients,
+                title = "New inventory item",
+                body = "${user.email ?: "Someone"} added: $name (x$quantity)"
+            )
+        } catch (_: Exception) { }
     }
 
     suspend fun markAsPurchased(

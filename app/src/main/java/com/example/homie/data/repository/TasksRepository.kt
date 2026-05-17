@@ -15,6 +15,7 @@ class TasksRepository {
 
     private val firestore = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private val notificationsRepository = NotificationsRepository()
 
     suspend fun getApartmentId(): String? {
         val uid = auth.currentUser?.uid ?: return null
@@ -88,6 +89,16 @@ class TasksRepository {
             .document(taskId)
             .set(task)
             .await()
+
+        if (assignedToId.isNotBlank() && assignedToId != user.uid) {
+            try {
+                notificationsRepository.notifyUser(
+                    recipientId = assignedToId,
+                    title = "New task assigned",
+                    body = "${user.email ?: "Someone"} assigned you: $title"
+                )
+            } catch (_: Exception) { }
+        }
     }
 
     suspend fun deleteTask(apartmentId: String, taskId: String) {

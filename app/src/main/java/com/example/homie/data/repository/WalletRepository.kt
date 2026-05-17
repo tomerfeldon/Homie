@@ -10,6 +10,7 @@ class WalletRepository {
 
     private val firestore = FirebaseFirestore.getInstance()
     private val auth = FirebaseAuth.getInstance()
+    private val notificationsRepository = NotificationsRepository()
 
     suspend fun getApartmentId(): String? {
         val uid = auth.currentUser?.uid ?: return null
@@ -32,6 +33,18 @@ class WalletRepository {
             .collection("expenses")
             .document(expense.id)
             .set(expense).await()
+
+        try {
+            val currentUid = auth.currentUser?.uid
+            val actor = auth.currentUser?.email ?: "Someone"
+            val recipients = getApartmentMembers(aptId)
+                .mapNotNull { it.userId.takeIf { uid -> uid.isNotBlank() && uid != currentUid } }
+            notificationsRepository.notifyUsers(
+                recipientIds = recipients,
+                title = "New expense added",
+                body = "$actor added: ₪${expense.amount} - ${expense.description}"
+            )
+        } catch (_: Exception) { }
     }
 
     suspend fun deleteExpense(aptId: String, expenseId: String) {
