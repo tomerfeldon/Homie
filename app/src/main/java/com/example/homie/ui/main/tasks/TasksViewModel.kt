@@ -29,15 +29,30 @@ class TasksViewModel(
 
     private var allTasks: List<Task> = emptyList()
     private var selectedAssigneeIds: Set<String> = emptySet()
+    private var statusFilter: StatusFilter = StatusFilter.ALL
+
+    enum class StatusFilter { ALL, PENDING, COMPLETED }
 
     fun setFilter(ids: Set<String>) {
         selectedAssigneeIds = ids
         applyFilter()
     }
 
+    fun setStatusFilter(status: StatusFilter) {
+        statusFilter = status
+        applyFilter()
+    }
+
     private fun applyFilter() {
-        val filtered = if (selectedAssigneeIds.isEmpty()) allTasks
-                       else allTasks.filter { it.assignedTo in selectedAssigneeIds }
+        var filtered = allTasks
+        if (selectedAssigneeIds.isNotEmpty()) {
+            filtered = filtered.filter { it.assignedTo in selectedAssigneeIds }
+        }
+        filtered = when (statusFilter) {
+            StatusFilter.PENDING -> filtered.filter { !it.completed }
+            StatusFilter.COMPLETED -> filtered.filter { it.completed }
+            StatusFilter.ALL -> filtered
+        }
         _tasksState.postValue(TaskUiState.Success(filtered))
     }
 
@@ -102,9 +117,17 @@ class TasksViewModel(
     fun completeTask(task: Task) {
         viewModelScope.launch {
             try {
-                apartmentId?.let {
-                    repository.completeTask(it, task)
-                }
+                apartmentId?.let { repository.completeTask(it, task) }
+            } catch (e: Exception) {
+                _tasksState.value = TaskUiState.Error(e.message ?: "Error")
+            }
+        }
+    }
+
+    fun uncompleteTask(task: Task) {
+        viewModelScope.launch {
+            try {
+                apartmentId?.let { repository.uncompleteTask(it, task) }
             } catch (e: Exception) {
                 _tasksState.value = TaskUiState.Error(e.message ?: "Error")
             }

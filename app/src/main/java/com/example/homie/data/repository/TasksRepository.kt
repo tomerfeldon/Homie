@@ -168,4 +168,20 @@ class TasksRepository {
             )
         } catch (_: Exception) { }
     }
+
+    suspend fun uncompleteTask(apartmentId: String, task: Task) {
+        val uid = auth.currentUser?.uid ?: return
+
+        val taskRef = firestore.collection("apartments")
+            .document(apartmentId)
+            .collection("tasks")
+            .document(task.id)
+
+        val userRef = firestore.collection("users").document(uid)
+
+        firestore.runBatch { batch ->
+            batch.set(taskRef, mapOf("completed" to false), SetOptions.merge())
+            batch.set(userRef, mapOf("streak" to FieldValue.increment(-1)), SetOptions.merge())
+        }.await()
+    }
 }

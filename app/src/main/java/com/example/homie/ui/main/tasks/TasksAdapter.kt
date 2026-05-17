@@ -5,9 +5,10 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.homie.data.model.Task
 import com.example.homie.databinding.ItemTaskBinding
+import com.google.firebase.auth.FirebaseAuth
 
 class TasksAdapter(
-    private val onTaskChecked: (Task) -> Unit
+    private val onTaskToggled: (Task, Boolean) -> Unit
 ) : RecyclerView.Adapter<TasksAdapter.TaskViewHolder>() {
 
     private val taskList = mutableListOf<Task>()
@@ -34,12 +35,10 @@ class TasksAdapter(
     override fun getItemCount() = taskList.size
 
     override fun onBindViewHolder(holder: TaskViewHolder, position: Int) {
-
         val task = taskList[position]
+        val currentUid = FirebaseAuth.getInstance().currentUser?.uid
 
         with(holder.binding) {
-
-            // IMPORTANT: Remove old listener before setting state
             checkComplete.setOnCheckedChangeListener(null)
 
             checkComplete.text = task.title
@@ -47,16 +46,12 @@ class TasksAdapter(
             tvDescription.text = task.description
             tvAssignedTo.text = "Assigned to ${task.assignedToName}"
 
-            if (task.completed) {
-                checkComplete.isEnabled = false
-            } else {
-                checkComplete.isEnabled = true
+            // Can complete any pending task; can only uncheck if you're the assignee
+            val canToggle = !task.completed || task.assignedTo == currentUid
+            checkComplete.isEnabled = canToggle
 
-                checkComplete.setOnCheckedChangeListener { _, isChecked ->
-                    if (isChecked) {
-                        onTaskChecked(task)
-                    }
-                }
+            checkComplete.setOnCheckedChangeListener { _, isChecked ->
+                onTaskToggled(task, isChecked)
             }
         }
     }

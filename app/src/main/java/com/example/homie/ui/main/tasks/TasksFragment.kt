@@ -42,8 +42,9 @@ class TasksFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 
-        adapter = TasksAdapter { task ->
-            viewModel.completeTask(task)
+        adapter = TasksAdapter { task, isCompleted ->
+            if (isCompleted) viewModel.completeTask(task)
+            else viewModel.uncompleteTask(task)
         }
 
         binding.rvTasks.layoutManager = LinearLayoutManager(requireContext())
@@ -52,6 +53,8 @@ class TasksFragment : Fragment() {
         progressDialog = ProgressDialog(requireContext())
         progressDialog.setMessage("Loading...")
         progressDialog.setCancelable(false)
+
+        buildStatusChips()
 
         viewModel.loadTasks()
         viewModel.loadMembers()
@@ -79,6 +82,26 @@ class TasksFragment : Fragment() {
         }
 
         setupSwipeToDelete()
+    }
+
+    private fun buildStatusChips() {
+        val group = binding.chipGroupStatus
+        val options = listOf(
+            "All" to TasksViewModel.StatusFilter.ALL,
+            "Pending" to TasksViewModel.StatusFilter.PENDING,
+            "Completed" to TasksViewModel.StatusFilter.COMPLETED
+        )
+        options.forEach { (label, filter) ->
+            val chip = Chip(requireContext()).apply {
+                text = label
+                isCheckable = true
+                isChecked = filter == TasksViewModel.StatusFilter.ALL
+            }
+            chip.setOnCheckedChangeListener { _, isChecked ->
+                if (isChecked) viewModel.setStatusFilter(filter)
+            }
+            group.addView(chip)
+        }
     }
 
     private fun buildFilterChips(members: List<User>) {
