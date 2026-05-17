@@ -96,10 +96,15 @@ class TasksRepository {
         if (assignedToId.isNotBlank() && assignedToId != user.uid) {
             Log.d("HomieNotif", "addTask: sending notification to $assignedToId")
             try {
+                val actorName = firestore.collection("users").document(user.uid)
+                    .get().await().getString("name")
+                    ?.takeIf { it.isNotBlank() }
+                    ?: user.email
+                    ?: "Someone"
                 notificationsRepository.notifyUser(
                     recipientId = assignedToId,
                     title = "New task assigned",
-                    body = "${user.email ?: "Someone"} assigned you: $title"
+                    body = "$actorName assigned you: $title"
                 )
             } catch (e: Exception) {
                 Log.e("HomieNotif", "addTask: outer catch swallowed: ${e.message}", e)

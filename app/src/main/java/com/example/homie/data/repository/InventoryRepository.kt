@@ -79,10 +79,15 @@ class InventoryRepository {
             val aptDoc = firestore.collection("apartments").document(apartmentId).get().await()
             val memberIds = aptDoc.get("members") as? List<String> ?: emptyList()
             val recipients = memberIds.filter { it.isNotBlank() && it != user.uid }
+            val actorName = firestore.collection("users").document(user.uid)
+                .get().await().getString("name")
+                ?.takeIf { it.isNotBlank() }
+                ?: user.email
+                ?: "Someone"
             notificationsRepository.notifyUsers(
                 recipientIds = recipients,
                 title = "New inventory item",
-                body = "${user.email ?: "Someone"} added: $name (x$quantity)"
+                body = "$actorName added: $name (x$quantity)"
             )
         } catch (_: Exception) { }
     }

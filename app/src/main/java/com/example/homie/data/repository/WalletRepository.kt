@@ -36,7 +36,11 @@ class WalletRepository {
 
         try {
             val currentUid = auth.currentUser?.uid
-            val actor = auth.currentUser?.email ?: "Someone"
+            val actor = currentUid?.let {
+                firestore.collection("users").document(it).get().await().getString("name")
+            }?.takeIf { it.isNotBlank() }
+                ?: auth.currentUser?.email
+                ?: "Someone"
             val aptDoc = firestore.collection("apartments").document(aptId).get().await()
             val memberIds = aptDoc.get("members") as? List<String> ?: emptyList()
             val recipients = memberIds.filter { it.isNotBlank() && it != currentUid }
