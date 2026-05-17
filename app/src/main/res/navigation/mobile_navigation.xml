@@ -11,14 +11,37 @@
         android:label="@string/title_dashboard"
         tools:layout="@layout/fragment_dashboard" />
 
-    <fragment
+    <navigation
         android:id="@+id/navigation_wallet"
-        android:name="com.example.homie.ui.main.wallet.WalletFragment"
-        android:label="@string/title_wallet"
-        tools:layout="@layout/fragment_wallet" >
-        <action
-            android:id="@+id/action_navigation_wallet_to_addExpenseFragment"
-            app:destination="@id/addExpenseFragment" />
+        app:startDestination="@id/navigation_wallet_home">
+
+        <fragment
+            android:id="@+id/navigation_wallet_home"
+            android:name="com.example.homie.ui.main.wallet.WalletFragment"
+            android:label="@string/title_wallet"
+            tools:layout="@layout/fragment_wallet">
+            <action
+                android:id="@+id/action_navigation_wallet_to_addExpenseFragment"
+                app:destination="@id/addExpenseFragment" />
+        </fragment>
+
+    </navigation>
+
+    <fragment
+        android:id="@+id/addExpenseFragment"
+        android:name="com.example.homie.ui.main.wallet.AddExpenseFragment"
+        android:label="AddExpenseFragment">
+
+        <argument
+            android:name="prefilledTitle"
+            app:argType="string"
+            android:defaultValue="" />
+
+        <argument
+            android:name="prefilledAmount"
+            app:argType="float"
+            android:defaultValue="0.0" />
+
     </fragment>
 
     <fragment
@@ -41,22 +64,6 @@
         <action
             android:id="@+id/action_navigation_inventory_to_addExpenseFragment"
             app:destination="@id/addExpenseFragment" />
-
-    </fragment>
-    <fragment
-        android:id="@+id/addExpenseFragment"
-        android:name="com.example.homie.ui.main.wallet.AddExpenseFragment"
-        android:label="AddExpenseFragment">
-
-        <argument
-            android:name="prefilledTitle"
-            app:argType="string"
-            android:defaultValue="" />
-
-        <argument
-            android:name="prefilledAmount"
-            app:argType="float"
-            android:defaultValue="0.0" />
 
     </fragment>
     <fragment
