@@ -4,7 +4,6 @@ import com.example.homie.data.model.NotificationItem
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-import com.google.firebase.firestore.Query
 import kotlinx.coroutines.tasks.await
 
 class NotificationsRepository {
@@ -16,16 +15,20 @@ class NotificationsRepository {
         firestore.collection("users").document(userId).collection("notifications")
 
     fun observeNotifications(
-        onUpdate: (List<NotificationItem>) -> Unit
+        onUpdate: (List<NotificationItem>) -> Unit,
+        onError: (String) -> Unit
     ): ListenerRegistration? {
         val userId = auth.currentUser?.uid ?: return null
         return notificationsRef(userId)
-            .orderBy("timestamp", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, _ ->
-                if (snapshot == null) return@addSnapshotListener
-                val items = snapshot.documents.mapNotNull { doc ->
-                    doc.toObject(NotificationItem::class.java)?.copy(id = doc.id)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    onError(error.message ?: "Failed to load notifications")
+                    return@addSnapshotListener
                 }
+                if (snapshot == null) return@addSnapshotListener
+                val items = snapshot.documents
+                    .mapNotNull { doc -> doc.toObject(NotificationItem::class.java)?.copy(id = doc.id) }
+                    .sortedByDescending { it.timestamp }
                 onUpdate(items)
             }
     }

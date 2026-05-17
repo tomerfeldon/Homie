@@ -21,9 +21,10 @@ class NotificationsViewModel(
     fun loadNotifications() {
         _notificationsState.value = NotificationsUiState.Loading
         listener?.remove()
-        listener = repository.observeNotifications { items ->
-            _notificationsState.postValue(NotificationsUiState.Success(items))
-        }
+        listener = repository.observeNotifications(
+            onUpdate = { items -> _notificationsState.postValue(NotificationsUiState.Success(items)) },
+            onError = { msg -> _notificationsState.postValue(NotificationsUiState.Error(msg)) }
+        )
         if (listener == null) {
             _notificationsState.value = NotificationsUiState.Error("User not logged in")
         }
