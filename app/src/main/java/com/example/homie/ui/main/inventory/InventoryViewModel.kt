@@ -96,12 +96,12 @@ class InventoryViewModel(
         }
     }
 
-    fun updateQuantity(item: InventoryItem, newQuantity: Int) {
+    fun updateItem(item: InventoryItem, newName: String, newQuantity: Int) {
         viewModelScope.launch {
             try {
-                apartmentId?.let { repository.updateQuantity(it, item.id, newQuantity) }
+                apartmentId?.let { repository.updateItem(it, item.id, newName, newQuantity) }
             } catch (e: Exception) {
-                _inventoryState.value = InventoryUiState.Error(e.message ?: "Failed to update quantity")
+                _inventoryState.value = InventoryUiState.Error(e.message ?: "Failed to update item")
             }
         }
     }

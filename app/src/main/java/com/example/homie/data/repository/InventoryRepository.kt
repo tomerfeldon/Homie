@@ -60,12 +60,18 @@ class InventoryRepository {
 
         val itemId = UUID.randomUUID().toString()
 
+        val addedByName = firestore.collection("users").document(user.uid)
+            .get().await().getString("name")
+            ?.takeIf { it.isNotBlank() }
+            ?: user.email
+            ?: "Someone"
+
         val item = InventoryItem(
             id = itemId,
             name = name,
             quantity = quantity,
             addedBy = user.uid,
-            addedByName = user.email ?: ""
+            addedByName = addedByName
         )
 
         firestore.collection("apartments")
@@ -123,12 +129,12 @@ class InventoryRepository {
         } catch (_: Exception) { }
     }
 
-    suspend fun updateQuantity(apartmentId: String, itemId: String, quantity: Int) {
+    suspend fun updateItem(apartmentId: String, itemId: String, name: String, quantity: Int) {
         firestore.collection("apartments")
             .document(apartmentId)
             .collection("inventory")
             .document(itemId)
-            .set(mapOf("quantity" to quantity), SetOptions.merge())
+            .set(mapOf("name" to name, "quantity" to quantity), SetOptions.merge())
             .await()
     }
 

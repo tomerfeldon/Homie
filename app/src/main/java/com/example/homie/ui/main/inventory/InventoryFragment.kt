@@ -158,26 +158,35 @@ class InventoryFragment : Fragment() {
     }
 
     private fun showEditQuantityDialog(item: InventoryItem) {
-        val input = EditText(requireContext()).apply {
+        val padding = (20 * resources.displayMetrics.density).toInt()
+
+        val etName = EditText(requireContext()).apply {
+            hint = "Item name"
+            setText(item.name)
+        }
+        val etQty = EditText(requireContext()).apply {
+            hint = "Quantity"
             inputType = android.text.InputType.TYPE_CLASS_NUMBER
             setText(item.quantity.toString())
-            selectAll()
         }
-        val container = android.widget.FrameLayout(requireContext()).apply {
-            val padding = (20 * resources.displayMetrics.density).toInt()
+
+        val container = android.widget.LinearLayout(requireContext()).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
             setPadding(padding, 0, padding, 0)
-            addView(input)
+            addView(etName)
+            addView(etQty)
         }
 
         com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Edit quantity: ${item.name}")
+            .setTitle("Edit item")
             .setView(container)
             .setPositiveButton("Save") { _, _ ->
-                val newQty = input.text.toString().toIntOrNull()
-                if (newQty != null && newQty > 0) {
-                    viewModel.updateQuantity(item, newQty)
-                } else {
-                    Toast.makeText(requireContext(), "Enter a valid quantity", Toast.LENGTH_SHORT).show()
+                val newName = etName.text.toString().trim()
+                val newQty = etQty.text.toString().toIntOrNull()
+                when {
+                    newName.isEmpty() -> Toast.makeText(requireContext(), "Enter item name", Toast.LENGTH_SHORT).show()
+                    newQty == null || newQty < 1 -> Toast.makeText(requireContext(), "Enter a valid quantity", Toast.LENGTH_SHORT).show()
+                    else -> viewModel.updateItem(item, newName, newQty)
                 }
             }
             .setNegativeButton("Cancel", null)
