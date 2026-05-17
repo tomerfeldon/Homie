@@ -86,4 +86,10 @@
         android:name="com.example.homie.ui.main.inventory.AddInventoryFragment"
         android:label="fragment_add_inventory"
         tools:layout="@layout/fragment_add_inventory" />
+
+    <fragment
+        android:id="@+id/navigation_notifications"
+        android:name="com.example.homie.ui.main.notifications.NotificationsFragment"
+        android:label="@string/title_notifications"
+        tools:layout="@layout/fragment_notifications" />
 </navigation>

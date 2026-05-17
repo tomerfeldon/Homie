@@ -118,6 +118,9 @@
     <color name="shimmer">#E0E0E0</color>
     <color name="input_background">#F5F5F5</color>
 
+    <!-- Unread notification highlight -->
+    <color name="unread_notification_bg">#EDE8FF</color>
+
     <!-- ================ -->
     <!-- LEGACY SUPPORT -->
     <!-- ================ -->
