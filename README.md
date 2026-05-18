@@ -1,161 +1,110 @@
-# Homie
+# 🏠 Homie
 
-An Android application for simplifying shared apartment management. Homie helps roommates coordinate expenses, tasks, inventory, and communication in one place.
+**Homie** is a native Android app that helps roommates manage their shared apartment — track expenses, split bills, assign chores, manage inventory, and stay in sync with real-time notifications.
+
+---
 
 ## Features
 
-### Authentication
-- Email/password authentication via Firebase
-- User registration with profile creation
-- Seamless login flow with apartment setup
+- **Dashboard** — overview of your apartment: members, urgent tasks, and financial balance at a glance
+- **Wallet** — log shared expenses by category, auto-split among roommates, view balances, and settle up
+- **Tasks** — create and assign household chores, track completion, and build streaks
+- **Inventory** — maintain a shared shopping list, mark items as purchased, and quickly log their cost
+- **Notifications** — real-time push notifications for expenses, task updates, and settlements
+- **Apartment Management** — create or join an apartment with a 6-digit invite code
 
-### Apartment Management
-- Create new apartments with auto-generated invite codes
-- Join existing apartments using 6-digit invite codes
-- View apartment members and their profiles
-
-### Dashboard
-- Central hub displaying apartment overview
-- Member list with avatars
-- Quick view of urgent/uncompleted tasks
-- Real-time financial balance summary
-
-### Wallet (Expense Tracking)
-- Record shared expenses with amount, category, and description
-- Upload receipt images
-- Categories: Rent, Groceries, Electricity, Internet, Maintenance, Other
-- Automatic expense splitting among roommates
-- Real-time balance calculation showing who owes whom
-
-### Task Management
-- Create and assign household chores
-- Track task completion status
-- Streak system for completed tasks
-- Urgent tasks highlighted on dashboard
-
-### Inventory
-- Shared shopping/grocery list
-- Track items needed with quantities
-- Mark items as purchased
-- Quick add expenses for purchased items
+---
 
 ## Tech Stack
 
-- **Language:** Kotlin
-- **Architecture:** MVVM (Model-View-ViewModel)
-- **Min SDK:** 24 (Android 7.0)
-- **Target SDK:** 34 (Android 14)
+| Layer | Technology |
+|---|---|
+| Language | Kotlin |
+| Architecture | MVVM |
+| Database | Firebase Firestore |
+| Authentication | Firebase Auth (Email/Password) |
+| Storage | Firebase Cloud Storage |
+| Push Notifications | Firebase Cloud Messaging (FCM) |
+| UI | Material Design 3, Jetpack Navigation |
+| Image Loading | Glide |
+| Async | Kotlin Coroutines + LiveData |
+| Build | Gradle 8 with Kotlin DSL |
 
-### Dependencies
-- Firebase Authentication
-- Firebase Firestore
-- Firebase Cloud Storage
-- AndroidX Material Design 3
-- Jetpack Navigation Component
-- Kotlin Coroutines
-- Glide (Image Loading)
-- LiveData & ViewModel
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Android Studio (latest stable)
+- JDK 11+
+- A Firebase project
+
+### Firebase Setup
+
+1. Go to the [Firebase Console](https://console.firebase.google.com/) and create a new project
+2. Add an Android app with package name: `com.example.homie`
+3. Download `google-services.json` and place it inside the `/app` directory
+4. Enable the following Firebase services:
+   - **Authentication** → Email/Password provider
+   - **Firestore Database** → production mode
+   - **Cloud Storage** → for receipt/image uploads
+   - **Cloud Messaging** → for push notifications
+
+### Build & Run
+
+```bash
+git clone https://github.com/tomerfeldon/homie.git
+cd Homie
+./gradlew assembleDebug
+```
+
+Then open the project in Android Studio and run it on an emulator or physical device.
+
+---
+
+## Architecture
+
+Homie follows the **MVVM** pattern with a clean separation of concerns:
+
+```
+UI (Fragments / Activities)
+        ↓ observes
+   ViewModel (LiveData / UiState)
+        ↓ calls
+   Repository (Firebase Firestore / Auth / Storage)
+        ↓ reads/writes
+   Firebase Backend
+```
+
+- **Model** — data classes in `data/model/`
+- **Repository** — all Firebase operations in `data/repository/`
+- **ViewModel** — UI state management with sealed `UiState` classes
+- **View** — Fragments and Activities that observe ViewModels
+
+---
 
 ## Project Structure
 
 ```
 app/src/main/java/com/example/homie/
-├── MainActivity.kt
 ├── data/
-│   ├── model/
-│   │   ├── User.kt
-│   │   ├── Apartment.kt
-│   │   ├── Task.kt
-│   │   ├── Expense.kt
-│   │   ├── InventoryItem.kt
-│   │   └── DashboardData.kt
-│   └── repository/
-│       ├── AuthRepository.kt
-│       ├── ApartmentRepository.kt
-│       ├── DashboardRepository.kt
-│       ├── TasksRepository.kt
-│       └── InventoryRepository.kt
-└── ui/
-    ├── auth/           # Login & Registration
-    ├── onboarding/     # Apartment Setup
-    └── main/
-        ├── dashboard/  # Dashboard
-        ├── wallet/     # Expenses
-        ├── tasks/      # Task Management
-        └── inventory/  # Inventory Tracking
+│   ├── model/          # Data classes (User, Task, Expense, InventoryItem, …)
+│   └── repository/     # Firebase data access layer
+├── ui/
+│   ├── auth/           # Login, Register, Splash
+│   ├── onboarding/     # Create / Join apartment
+│   └── main/
+│       ├── dashboard/
+│       ├── wallet/
+│       ├── tasks/
+│       ├── inventory/
+│       └── notifications/
+└── MainActivity.kt     # Navigation host
 ```
 
-## Setup
-
-### Prerequisites
-- Android Studio (latest version recommended)
-- JDK 11 or higher
-- Firebase account
-
-### Firebase Configuration
-
-1. Create a new project in [Firebase Console](https://console.firebase.google.com/)
-2. Add an Android app with package name `com.example.homie`
-3. Download `google-services.json` and place it in the `app/` directory
-4. Enable the following Firebase services:
-   - Authentication (Email/Password provider)
-   - Firestore Database
-   - Cloud Storage
-
-### Build & Run
-
-1. Clone the repository
-   ```bash
-   git clone <repository-url>
-   cd Homie
-   ```
-
-2. Open the project in Android Studio
-
-3. Sync Gradle files
-
-4. Run the app on an emulator or physical device
-
-## Database Schema
-
-### Users Collection
-```
-users/{userId}
-├── userId: String
-├── name: String
-├── email: String
-├── avatarUrl: String (optional)
-├── apartmentId: String
-└── streak: Int
-```
-
-### Apartments Collection
-```
-apartments/{apartmentId}
-├── name: String
-├── inviteCode: String
-├── members: List<String>
-├── tasks/{taskId}
-│   ├── title: String
-│   ├── description: String
-│   ├── assignedTo: String
-│   ├── completed: Boolean
-│   └── timestamp: Long
-├── expenses/{expenseId}
-│   ├── amount: Double
-│   ├── category: String
-│   ├── description: String
-│   ├── payerId: String
-│   ├── receiptUrl: String (optional)
-│   └── timestamp: Long
-└── inventory/{itemId}
-    ├── name: String
-    ├── quantity: Int
-    ├── addedBy: String
-    ├── purchased: Boolean
-    └── timestamp: Long
-```
+---
 
 ## License
 
-This project is for educational purposes.
+This project was built for educational purposes.
