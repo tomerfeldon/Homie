@@ -1,17 +1,17 @@
 # 🏠 Homie
 
-**Homie** is a native Android app that helps roommates manage their shared apartment — track expenses, split bills, assign chores, manage inventory, and stay in sync with real-time notifications.
+**Homie** is a native Android app that helps roommates manage their shared apartment - track expenses, split bills, assign chores, manage inventory, and stay in sync with real-time notifications.
 
 ---
 
 ## Features
 
-- **Dashboard** — overview of your apartment: members, urgent tasks, and financial balance at a glance
-- **Wallet** — log shared expenses by category, auto-split among roommates, view balances, and settle up
-- **Tasks** — create and assign household chores, track completion, and build streaks
-- **Inventory** — maintain a shared shopping list, mark items as purchased, and quickly log their cost
-- **Notifications** — real-time push notifications for expenses, task updates, and settlements
-- **Apartment Management** — create or join an apartment with a 6-digit invite code
+- **Dashboard** - overview of your apartment: members, urgent tasks, and financial balance at a glance
+- **Wallet** - log shared expenses by category, auto-split among roommates, view balances, and settle up
+- **Tasks** - create and assign household chores, track completion, and build streaks
+- **Inventory** - maintain a shared shopping list, mark items as purchased, and quickly log their cost
+- **Notifications** - real-time push notifications for expenses, task updates, and settlements
+- **Apartment Management** - create or join an apartment with a 6-digit invite code
 
 ---
 
